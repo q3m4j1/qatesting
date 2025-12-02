@@ -1,0 +1,255 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { toast } from 'sonner';
+import { Pencil, Trash2, Plus } from 'lucide-react';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+export default function UsersManagement({ token }) {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    role: 'User',
+    first_name: '',
+    last_name: '',
+    team_name: ''
+  });
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/users`, {
+        params: { admin_token: token }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      toast.error('Gabim në ngarkimin e userave');
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (editingUser) {
+        await axios.put(`${API}/users/${editingUser.id}`, formData, {
+          params: { admin_token: token }
+        });
+        toast.success('Useri u përditësua me sukses!');
+      } else {
+        await axios.post(`${API}/users`, formData, {
+          params: { admin_token: token }
+        });
+        toast.success('Useri u krijua me sukses!');
+      }
+      
+      fetchUsers();
+      setDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e userit');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (userId) => {
+    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë user?')) return;
+
+    try {
+      await axios.delete(`${API}/users/${userId}`, {
+        params: { admin_token: token }
+      });
+      toast.success('Useri u fshi me sukses!');
+      fetchUsers();
+    } catch (error) {
+      toast.error('Gabim në fshirjen e userit');
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setFormData({
+      email: user.email,
+      password: '',
+      role: user.role,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      team_name: user.team_name
+    });
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingUser(null);
+    setFormData({
+      email: '',
+      password: '',
+      role: 'User',
+      first_name: '',
+      last_name: '',
+      team_name: ''
+    });
+  };
+
+  return (
+    <Card className="shadow-lg border-0" data-testid="users-management-card">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl font-bold" data-testid="users-title">Menaxhimi i Userëve</CardTitle>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600" data-testid="add-user-button">
+                <Plus className="w-4 h-4 mr-2" />
+                Shto User
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md" data-testid="user-dialog">
+              <DialogHeader>
+                <DialogTitle>{editingUser ? 'Përditëso Userin' : 'Shto User të Ri'}</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="role">Roli</Label>
+                  <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
+                    <SelectTrigger data-testid="user-role-select">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="User">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="first_name">Emri</Label>
+                  <Input
+                    id="first_name"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                    required
+                    data-testid="user-firstname-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name">Mbiemri</Label>
+                  <Input
+                    id="last_name"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                    required
+                    data-testid="user-lastname-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    required
+                    data-testid="user-email-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    required={!editingUser}
+                    placeholder={editingUser ? 'Lëre bosh për të mbajtur të njëjtin' : ''}
+                    data-testid="user-password-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="team_name">Emri i Ekipit</Label>
+                  <Input
+                    id="team_name"
+                    value={formData.team_name}
+                    onChange={(e) => setFormData({...formData, team_name: e.target.value})}
+                    required
+                    data-testid="user-team-input"
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading} data-testid="user-submit-button">
+                  {loading ? 'Duke ruajtur...' : (editingUser ? 'Përditëso' : 'Shto')}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6">
+        <div className="overflow-x-auto">
+          <table className="w-full" data-testid="users-table">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left py-3 px-4 font-semibold">Emri</th>
+                <th className="text-left py-3 px-4 font-semibold">Email</th>
+                <th className="text-left py-3 px-4 font-semibold">Roli</th>
+                <th className="text-left py-3 px-4 font-semibold">Ekipi</th>
+                <th className="text-right py-3 px-4 font-semibold">Veprime</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id} className="border-b hover:bg-gray-50 transition-colors" data-testid={`user-row-${user.email}`}>
+                  <td className="py-3 px-4">{user.first_name} {user.last_name}</td>
+                  <td className="py-3 px-4">{user.email}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      user.role === 'Admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                    }`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">{user.team_name}</td>
+                  <td className="py-3 px-4 text-right space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleEdit(user)}
+                      data-testid={`edit-user-${user.email}`}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDelete(user.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      data-testid={`delete-user-${user.email}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
