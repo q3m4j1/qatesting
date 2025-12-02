@@ -130,10 +130,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # Initialize default admin user
 async def init_default_admin():
     try:
-        existing = await db.users.find_one({"email": "test@test.test"})
+        existing = await db.users.find_one({"email": "admin@example.com"})
         if not existing:
             admin = User(
-                email="test@test.test",
+                email="admin@example.com",
                 role="Admin",
                 first_name="Test",
                 last_name="Admin",
