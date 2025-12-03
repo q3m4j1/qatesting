@@ -699,6 +699,25 @@ async def get_assignments(admin_token: str, date_filter: Optional[str] = None):
     assignments = await db.assignments.find({"date": target_date}, {"_id": 0}).to_list(1000)
     return assignments
 
+@api_router.delete("/assignments")
+async def delete_assignments(admin_token: str, date_filter: Optional[str] = None):
+    admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
+    if not admin:
+        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë listat")
+    
+    target_date = date_filter if date_filter else date.today().isoformat()
+    
+    # Delete assignments
+    result = await db.assignments.delete_many({"date": target_date})
+    
+    # Clear assigned_environment from work items
+    await db.work_items.update_many(
+        {"date": target_date},
+        {"$unset": {"assigned_environment": ""}}
+    )
+    
+    return {"message": f"Shpërndarja u fshi me sukses. {result.deleted_count} assignment(e) u fshinë.", "deleted_count": result.deleted_count}
+
 # Include the router in the main app
 app.include_router(api_router)
 
