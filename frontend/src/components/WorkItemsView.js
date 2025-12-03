@@ -105,7 +105,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       work_item_name: item.work_item_name,
       microservices: item.microservices,
       environment: item.environment || '',
-      can_temp_branch: item.can_temp_branch
+      can_temp_branch: item.can_temp_branch,
+      priority: item.priority || 2
     });
     setDialogOpen(true);
   };
