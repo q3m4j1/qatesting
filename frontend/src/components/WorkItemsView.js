@@ -63,6 +63,15 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     }
   };
 
+  const fetchEnvironments = async () => {
+    try {
+      const response = await axios.get(`${API}/environments`);
+      setEnvironments(response.data);
+    } catch (error) {
+      toast.error('Gabim në ngarkimin e mjediseve');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
