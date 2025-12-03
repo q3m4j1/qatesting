@@ -183,6 +183,21 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="priority">Priority (1=Më i lartë, 4=Më i ulët) *</Label>
+                    <Select value={formData.priority.toString()} onValueChange={(value) => setFormData({...formData, priority: parseInt(value)})}>
+                      <SelectTrigger data-testid="work-item-priority-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 - Kritik</SelectItem>
+                        <SelectItem value="2">2 - I lartë</SelectItem>
+                        <SelectItem value="3">3 - Mesatar</SelectItem>
+                        <SelectItem value="4">4 - I ulët</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="environment">Environment (opsionale)</Label>
                     <Input
                       id="environment"
