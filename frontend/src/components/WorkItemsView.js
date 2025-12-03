@@ -256,6 +256,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">User</th>}
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">Ekipi</th>}
                 <th className="text-left py-3 px-4 font-semibold">Work Item</th>
+                <th className="text-left py-3 px-4 font-semibold">Priority</th>
                 <th className="text-left py-3 px-4 font-semibold">Mikroserviset</th>
                 <th className="text-left py-3 px-4 font-semibold">Temp Branch</th>
                 <th className="text-right py-3 px-4 font-semibold">Veprime</th>
