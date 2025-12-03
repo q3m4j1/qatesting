@@ -118,9 +118,10 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     setFormData({
       work_item_name: item.work_item_name,
       microservices: item.microservices,
-      environment: item.environment || '',
+      environment: item.environment || 'none',
       can_temp_branch: item.can_temp_branch,
-      priority: item.priority || 2
+      priority: item.priority || 2,
+      comments: item.comments || ''
     });
     setDialogOpen(true);
   };
