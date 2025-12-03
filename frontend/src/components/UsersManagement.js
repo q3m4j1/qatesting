@@ -202,6 +202,15 @@ export default function UsersManagement({ token }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        <div className="mb-4">
+          <Input
+            placeholder="Kërko userë..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="users-search"
+            className="max-w-md"
+          />
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full" data-testid="users-table">
             <thead>
@@ -214,7 +223,13 @@ export default function UsersManagement({ token }) {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {users.filter(user => {
+                const query = searchQuery.toLowerCase();
+                return user.first_name.toLowerCase().includes(query) ||
+                       user.last_name.toLowerCase().includes(query) ||
+                       user.email.toLowerCase().includes(query) ||
+                       user.team_name.toLowerCase().includes(query);
+              }).map((user) => (
                 <tr key={user.id} className="border-b hover:bg-gray-50 transition-colors" data-testid={`user-row-${user.email}`}>
                   <td className="py-3 px-4">{user.first_name} {user.last_name}</td>
                   <td className="py-3 px-4">{user.email}</td>
