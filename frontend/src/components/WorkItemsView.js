@@ -169,17 +169,16 @@ export default function WorkItemsView({ token, isAdmin, user }) {
               {new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          {!isAdmin && (
-            <Dialog open={dialogOpen} onOpenChange={(open) => {
-              setDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600" data-testid="add-work-item-button">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Shto Work Item
-                </Button>
-              </DialogTrigger>
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600" data-testid="add-work-item-button">
+                <Plus className="w-4 h-4 mr-2" />
+                Shto Work Item
+              </Button>
+            </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="work-item-dialog">
                 <DialogHeader>
                   <DialogTitle>{editingItem ? 'Përditëso Work Item' : 'Shto Work Item të Ri'}</DialogTitle>
