@@ -124,8 +124,17 @@ export default function MicroservicesManagement({ token }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        <div className="mb-4">
+          <Input
+            placeholder="Kërko mikroservise..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="microservices-search"
+            className="max-w-md"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {microservices.map((ms) => (
+          {microservices.filter(ms => ms.name.toLowerCase().includes(searchQuery.toLowerCase())).map((ms) => (
             <div 
               key={ms.id} 
               className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow flex items-center justify-between"
