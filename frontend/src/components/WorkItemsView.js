@@ -212,12 +212,29 @@ export default function WorkItemsView({ token, isAdmin, user }) {
 
                   <div className="space-y-2">
                     <Label htmlFor="environment">Environment (opsionale)</Label>
-                    <Input
-                      id="environment"
-                      value={formData.environment}
-                      onChange={(e) => setFormData({...formData, environment: e.target.value})}
-                      data-testid="work-item-environment-input"
-                      placeholder="p.sh. QA, Nightly"
+                    <Select value={formData.environment} onValueChange={(value) => setFormData({...formData, environment: value})}>
+                      <SelectTrigger data-testid="work-item-environment-select">
+                        <SelectValue placeholder="Zgjidhni environment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Asnjë</SelectItem>
+                        {environments.map(env => (
+                          <SelectItem key={env.id} value={env.name}>{env.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comments">Komente (opsionale)</Label>
+                    <textarea
+                      id="comments"
+                      value={formData.comments}
+                      onChange={(e) => setFormData({...formData, comments: e.target.value})}
+                      data-testid="work-item-comments-input"
+                      placeholder="Shto komente ose shënime..."
+                      className="w-full min-h-[80px] px-3 py-2 border rounded-md"
+                      rows={3}
                     />
                   </div>
 
