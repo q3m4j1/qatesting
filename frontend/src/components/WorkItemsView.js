@@ -24,7 +24,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
   const [formData, setFormData] = useState({
     work_item_name: '',
     microservices: {},
-    environment: '',
+    environment: 'none',
     can_temp_branch: false,
     priority: 2,
     comments: ''
