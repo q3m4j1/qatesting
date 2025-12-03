@@ -16,15 +16,18 @@ const API = `${BACKEND_URL}/api`;
 export default function WorkItemsView({ token, isAdmin, user }) {
   const [workItems, setWorkItems] = useState([]);
   const [microservices, setMicroservices] = useState([]);
+  const [environments, setEnvironments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     work_item_name: '',
     microservices: {},
     environment: '',
     can_temp_branch: false,
-    priority: 2
+    priority: 2,
+    comments: ''
   });
 
   useEffect(() => {
