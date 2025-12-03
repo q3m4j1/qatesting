@@ -51,6 +51,7 @@ Sistem i plotë për menaxhimin e mjediseve të testimit dhe shpërndarjen autom
 
 #### 1. Shtimi i Work Items
 - Vendos emrin e work item (p.sh. Feature-123)
+- **Zgjedh Priority** (1=Kritik, 2=I lartë, 3=Mesatar, 4=I ulët) - MANDATORY
 - Zgjedh mikroserviset e nevojshme (Po/Jo për secilin)
 - Opsionale: Specifiko environment
 - Përcakto nëse mund të bëhet temp branch me ekipin
