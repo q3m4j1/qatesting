@@ -95,6 +95,7 @@ class WorkItemRecord(BaseModel):
     microservices: Dict[str, bool]  # microservice_id: True/False
     environment: Optional[str] = None
     can_temp_branch: bool = False
+    priority: int  # 1, 2, 3, 4
     date: str  # YYYY-MM-DD
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -103,12 +104,14 @@ class WorkItemCreate(BaseModel):
     microservices: Dict[str, bool]
     environment: Optional[str] = None
     can_temp_branch: bool = False
+    priority: int
 
 class WorkItemUpdate(BaseModel):
     work_item_name: Optional[str] = None
     microservices: Optional[Dict[str, bool]] = None
     environment: Optional[str] = None
     can_temp_branch: Optional[bool] = None
+    priority: Optional[int] = None
 
 class AssignmentResult(BaseModel):
     user_id: str
