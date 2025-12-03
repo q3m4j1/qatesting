@@ -187,8 +187,17 @@ export default function TeamConflictsManagement({ token }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        <div className="mb-4">
+          <Input
+            placeholder="Kërko ekipe..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="teams-search"
+            className="max-w-md"
+          />
+        </div>
         <div className="space-y-4">
-          {configs.map((config) => {
+          {configs.filter(config => config.team_name.toLowerCase().includes(searchQuery.toLowerCase())).map((config) => {
             const teamUsers = users.filter(u => config.allowed_users.includes(u.id));
             return (
               <div 
