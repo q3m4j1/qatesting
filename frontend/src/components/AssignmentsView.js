@@ -49,6 +49,23 @@ export default function AssignmentsView({ token }) {
     }
   };
 
+  const deleteAssignments = async () => {
+    if (!window.confirm('Jeni i sigurt që dëshironi të fshini shpërndarjen e sotme?')) return;
+
+    setLoading(true);
+    try {
+      await axios.delete(`${API}/assignments`, {
+        params: { admin_token: token }
+      });
+      setAssignments([]);
+      toast.success('Shpërndarja u fshi me sukses!');
+    } catch (error) {
+      toast.error('Gabim në fshirjen e shpërndarjes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Group assignments by environment
   const groupedAssignments = assignments.reduce((acc, assignment) => {
     const env = assignment.assigned_environment;
