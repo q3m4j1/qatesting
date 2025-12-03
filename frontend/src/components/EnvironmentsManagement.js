@@ -17,6 +17,7 @@ export default function EnvironmentsManagement({ token }) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEnv, setEditingEnv] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     is_second: false
