@@ -33,6 +33,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
   useEffect(() => {
     fetchWorkItems();
     fetchMicroservices();
+    fetchEnvironments();
   }, []);
 
   const fetchWorkItems = async () => {
