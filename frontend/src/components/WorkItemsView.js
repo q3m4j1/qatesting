@@ -335,6 +335,15 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       </span>
                     </td>
                     <td className="py-3 px-4">
+                      {item.environment && item.environment !== 'none' ? (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                          {item.environment}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {selectedMs.map(ms => (
                           <span key={ms} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
