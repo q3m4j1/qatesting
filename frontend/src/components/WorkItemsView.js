@@ -22,7 +22,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     work_item_name: '',
     microservices: {},
     environment: '',
-    can_temp_branch: false
+    can_temp_branch: false,
+    priority: 2
   });
 
   useEffect(() => {
