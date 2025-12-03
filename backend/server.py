@@ -401,6 +401,7 @@ async def create_work_item(item: WorkItemCreate, user_token: str):
         microservices=item.microservices,
         environment=item.environment,
         can_temp_branch=item.can_temp_branch,
+        priority=item.priority,
         date=today
     )
     
