@@ -16,6 +16,7 @@ export default function MicroservicesManagement({ token }) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMs, setEditingMs] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [name, setName] = useState('');
 
   useEffect(() => {
