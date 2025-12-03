@@ -406,6 +406,7 @@ async def create_work_item(item: WorkItemCreate, user_token: str):
         environment=item.environment,
         can_temp_branch=item.can_temp_branch,
         priority=item.priority,
+        comments=item.comments,
         date=today
     )
     
