@@ -281,6 +281,17 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        {/* Search Bar */}
+        <div className="mb-4">
+          <Input
+            placeholder="Kërko work items..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="work-items-search"
+            className="max-w-md"
+          />
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full" data-testid="work-items-table">
             <thead>
@@ -289,13 +300,19 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">Ekipi</th>}
                 <th className="text-left py-3 px-4 font-semibold">Work Item</th>
                 <th className="text-left py-3 px-4 font-semibold">Priority</th>
+                <th className="text-left py-3 px-4 font-semibold">Assigned Env</th>
                 <th className="text-left py-3 px-4 font-semibold">Mikroserviset</th>
                 <th className="text-left py-3 px-4 font-semibold">Temp Branch</th>
                 <th className="text-right py-3 px-4 font-semibold">Veprime</th>
               </tr>
             </thead>
             <tbody>
-              {workItems.map((item) => {
+              {workItems.filter(item => {
+                const query = searchQuery.toLowerCase();
+                return item.work_item_name.toLowerCase().includes(query) ||
+                       item.user_name.toLowerCase().includes(query) ||
+                       item.team_name.toLowerCase().includes(query);
+              }).map((item) => {
                 const selectedMs = Object.entries(item.microservices)
                   .filter(([_, selected]) => selected)
                   .map(([msId, _]) => getMicroserviceName(msId));
