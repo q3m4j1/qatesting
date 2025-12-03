@@ -134,9 +134,10 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     setFormData({
       work_item_name: '',
       microservices: msObj,
-      environment: '',
+      environment: 'none',
       can_temp_branch: false,
-      priority: 2
+      priority: 2,
+      comments: ''
     });
   };
 
