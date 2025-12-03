@@ -670,6 +670,17 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 doc['date'] = target_date
                 doc['created_at'] = datetime.now(timezone.utc).isoformat()
             await db.assignments.insert_many(assignment_docs)
+            
+            # Update work items with assigned environment
+            for assignment in assignments:
+                await db.work_items.update_many(
+                    {
+                        "user_id": assignment.user_id,
+                        "work_item_name": assignment.work_item_name,
+                        "date": target_date
+                    },
+                    {"$set": {"assigned_environment": assignment.assigned_environment}}
+                )
         
         return assignments
         
