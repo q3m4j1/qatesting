@@ -217,7 +217,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                         <SelectValue placeholder="Zgjidhni environment" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Asnjë</SelectItem>
+                        <SelectItem value="none">Asnjë</SelectItem>
                         {environments.map(env => (
                           <SelectItem key={env.id} value={env.name}>{env.name}</SelectItem>
                         ))}
