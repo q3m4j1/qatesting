@@ -87,13 +87,20 @@ Sistem i plotë për menaxhimin e mjediseve të testimit dhe shpërndarjen autom
 
 ## 📊 Logjika e Shpërndarjes
 
-Sistemi ndjek këto rregulla në këtë renditje:
+Sistemi ndjek këto rregulla në këtë renditje (bazuar në Priority 1-4):
 
-1. **Prioritet 1:** Shpërndaj në mjedise të lira (pa konflikte)
-2. **Prioritet 2:** Ekipe të njëjta me konflikte → Temporary branches
-3. **Prioritet 3:** Front only → Second environments
-4. **Prioritet 4:** Optimizo bazuar në ngarkesën e mjediseve
-5. **Rregull i hekurt:** ASNJË konflikt mes ekipeve të ndryshme
+1. **Filtrimi sipas Priority:** Work items me priority më të lartë (1=Kritik) procesohen të parët
+2. **Shpërndarje pa konflikte:** Persona vendosen në mjedise të lira (pa konflikte mikroservisesh)
+3. **Ekipe të njëjta me konflikte:** Nëse kanë "can_temp_branch = Po", mund të vendosen në të njëjtin environment
+4. **Front only → Second environments:** Nëse dikush ka zgjedhur vetëm Front, mund të përdorë QA-second, Nightly-second, etj.
+5. **Radhë pritjeje:** Nëse nuk ka mjedis të disponueshëm, personi vendoset në "WAITING - Në radhë"
+6. **Rregull i hekurt:** ASNJË konflikt mikroservisesh mes ekipeve të ndryshme
+
+### Shembuj Shpërndarjeje:
+- ✅ **E lejuar:** Dy persona nga ekipe të ndryshme në të njëjtin environment nëse nuk kanë mikroservise të përbashkëta
+- ✅ **E lejuar:** Dy persona nga i njëjti ekip me mikroservise të përbashkëta nëse të dy kanë zgjedhur "can_temp_branch = Po"
+- ❌ **E ndaluar:** Dy persona nga ekipe të ndryshme me mikroservise të përbashkëta (konflikte)
+- 🕐 **Waiting:** Persona që nuk mund të vendosen duhet të presin derisa dikush të përfundojë
 
 ## 🗄️ Të Dhëna Fillestare
 
