@@ -335,9 +335,13 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      {item.environment && item.environment !== 'none' ? (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
-                          {item.environment}
+                      {item.assigned_environment ? (
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          item.assigned_environment === 'WAITING - Në radhë' 
+                            ? 'bg-red-100 text-red-700' 
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          {item.assigned_environment}
                         </span>
                       ) : (
                         <span className="text-gray-400 text-xs">-</span>
