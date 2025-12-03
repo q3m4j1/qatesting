@@ -364,38 +364,23 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right space-x-2">
-                      {!isAdmin && (
-                        <>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleEdit(item)}
-                            data-testid={`edit-work-item-${item.work_item_name}`}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            data-testid={`delete-work-item-${item.work_item_name}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                      {isAdmin && (
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDelete(item.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          data-testid={`admin-delete-work-item-${item.work_item_name}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEdit(item)}
+                        data-testid={`edit-work-item-${item.work_item_name}`}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDelete(item.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        data-testid={`delete-work-item-${item.work_item_name}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </td>
                   </tr>
                 );
