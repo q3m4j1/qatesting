@@ -500,10 +500,11 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         
         # Process assignments
         assignments = []
+        waiting_list = []
         env_assignments = {env['id']: [] for env in environments}
         
-        # Sort work items by team for better grouping
-        work_items_sorted = sorted(work_items, key=lambda x: x['team_name'])
+        # Sort work items by priority (1 is highest) then by team
+        work_items_sorted = sorted(work_items, key=lambda x: (x.get('priority', 4), x['team_name']))
         
         for item in work_items_sorted:
             user_id = item['user_id']
