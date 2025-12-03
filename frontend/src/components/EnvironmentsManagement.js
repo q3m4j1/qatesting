@@ -145,8 +145,17 @@ export default function EnvironmentsManagement({ token }) {
         </div>
       </CardHeader>
       <CardContent className="p-6">
+        <div className="mb-4">
+          <Input
+            placeholder="Kërko mjedise..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            data-testid="environments-search"
+            className="max-w-md"
+          />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {environments.map((env) => (
+          {environments.filter(env => env.name.toLowerCase().includes(searchQuery.toLowerCase())).map((env) => (
             <div 
               key={env.id} 
               className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
