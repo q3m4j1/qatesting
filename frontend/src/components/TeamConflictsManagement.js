@@ -18,6 +18,7 @@ export default function TeamConflictsManagement({ token }) {
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingConfig, setEditingConfig] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     team_name: '',
     allowed_users: []
