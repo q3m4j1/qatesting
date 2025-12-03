@@ -512,6 +512,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             team_name = item['team_name']
             work_item_name = item['work_item_name']
             microservices = item['microservices']
+            priority = item.get('priority', 4)
             
             # Get selected microservices (where value is True)
             selected_ms_ids = [ms_id for ms_id, selected in microservices.items() if selected]
@@ -539,8 +540,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 
                 # Check for conflicts
                 has_conflict = False
+                has_different_team_conflict = False
                 conflict_list = []
-                same_team_conflict = False
                 
                 for existing in existing_assignments:
                     existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
@@ -550,24 +551,33 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         conflict_list.extend([ms_id_to_name.get(ms_id, ms_id) for ms_id in common_ms])
                         has_conflict = True
                         
-                        # Check if same team
-                        if existing['team_name'] == team_name:
-                            same_team_conflict = True
+                        # Check if different team - THIS IS NOT ALLOWED
+                        if existing['team_name'] != team_name:
+                            has_different_team_conflict = True
+                            break
+                
+                # If different team conflict, skip this environment completely
+                if has_different_team_conflict:
+                    continue
                 
                 if not has_conflict:
-                    # No conflict, assign to this environment
+                    # No conflict at all, assign to this environment
                     env_assignments[env_id].append(item)
                     assigned_env = env['name']
                     assigned = True
                     break
-                elif same_team_conflict and item.get('can_temp_branch', False):
-                    # Same team with conflict but can use temp branches
-                    env_assignments[env_id].append(item)
-                    assigned_env = env['name']
-                    is_temp_branch = True
-                    conflicts = list(set(conflict_list))
-                    assigned = True
-                    break
+                elif has_conflict and not has_different_team_conflict:
+                    # Same team with conflict - check if can use temp branches
+                    if item.get('can_temp_branch', False):
+                        # Check if all in this env can do temp branches
+                        all_can_temp = all(e.get('can_temp_branch', False) for e in existing_assignments)
+                        if all_can_temp:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            conflicts = list(set(conflict_list))
+                            assigned = True
+                            break
             
             # If not assigned and only Front, try second environments
             if not assigned and only_front and second_envs:
@@ -583,42 +593,56 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     
                     # Check if all existing are from same team
                     all_same_team = all(e['team_name'] == team_name for e in existing_assignments)
-                    if all_same_team:
-                        env_assignments[env_id].append(item)
-                        assigned_env = env['name']
-                        is_temp_branch = True
-                        assigned = True
-                        break
-            
-            # Last resort: assign to least busy regular environment with temp branch (same team only)
-            if not assigned:
-                # Find environments with same team members only
-                for env in regular_envs:
-                    env_id = env['id']
-                    existing_assignments = env_assignments[env_id]
                     
-                    if existing_assignments:
-                        all_same_team = all(e['team_name'] == team_name for e in existing_assignments)
-                        if all_same_team and item.get('can_temp_branch', False):
+                    # Check for conflicts
+                    has_conflict = False
+                    for existing in existing_assignments:
+                        existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
+                        if 'Front' in [ms_id_to_name.get(ms_id, ms_id) for ms_id in existing_ms]:
+                            has_conflict = True
+                            break
+                    
+                    if all_same_team and has_conflict and item.get('can_temp_branch', False):
+                        # Same team, can do temp branch
+                        all_can_temp = all(e.get('can_temp_branch', False) for e in existing_assignments)
+                        if all_can_temp:
                             env_assignments[env_id].append(item)
                             assigned_env = env['name']
                             is_temp_branch = True
-                            
-                            # Calculate conflicts
-                            for existing in existing_assignments:
-                                existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
-                                common_ms = set(selected_ms_ids) & set(existing_ms)
-                                if common_ms:
-                                    conflicts.extend([ms_id_to_name.get(ms_id, ms_id) for ms_id in common_ms])
-                            conflicts = list(set(conflicts))
                             assigned = True
                             break
+                    elif not has_conflict:
+                        env_assignments[env_id].append(item)
+                        assigned_env = env['name']
+                        assigned = True
+                        break
             
-            # If still not assigned, assign to least busy environment
+            # If still not assigned, add to waiting list
             if not assigned:
-                least_busy_env = min(regular_envs, key=lambda e: len(env_assignments[e['id']]))
-                env_assignments[least_busy_env['id']].append(item)
-                assigned_env = least_busy_env['name']
+                waiting_info = {
+                    'user_id': user_id,
+                    'user_name': user_name,
+                    'team_name': team_name,
+                    'work_item_name': work_item_name,
+                    'microservices': selected_ms_names,
+                    'priority': priority,
+                    'reason': 'Të gjitha mjediset janë të zëna. Duhet të presin derisa dikush të përfundojë.'
+                }
+                waiting_list.append(waiting_info)
+                
+                # Create assignment result with "WAITING" status
+                assignment = AssignmentResult(
+                    user_id=user_id,
+                    user_name=user_name,
+                    team_name=team_name,
+                    work_item_name=work_item_name,
+                    assigned_environment="WAITING - Në radhë",
+                    microservices=selected_ms_names,
+                    is_temp_branch=False,
+                    conflicts=["Nuk ka mjedis të disponueshëm"]
+                )
+                assignments.append(assignment)
+                continue
             
             # Create assignment result
             assignment = AssignmentResult(
