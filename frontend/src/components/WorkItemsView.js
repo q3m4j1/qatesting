@@ -276,7 +276,6 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
         </div>
       </CardHeader>
       <CardContent className="p-6">
