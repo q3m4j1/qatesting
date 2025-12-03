@@ -96,6 +96,18 @@ export default function AssignmentsView({ token }) {
               <RefreshCw className="w-4 h-4 mr-2" />
               Rifresko
             </Button>
+            {assignments.length > 0 && (
+              <Button 
+                onClick={deleteAssignments}
+                disabled={loading}
+                variant="outline"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                data-testid="delete-assignments-button"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Fshi Shpërndarjen
+              </Button>
+            )}
             <Button 
               onClick={generateAssignments}
               disabled={generating}
