@@ -96,6 +96,8 @@ class WorkItemRecord(BaseModel):
     environment: Optional[str] = None
     can_temp_branch: bool = False
     priority: int  # 1, 2, 3, 4
+    comments: Optional[str] = None
+    assigned_environment: Optional[str] = None  # Set after assignment generation
     date: str  # YYYY-MM-DD
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -105,6 +107,7 @@ class WorkItemCreate(BaseModel):
     environment: Optional[str] = None
     can_temp_branch: bool = False
     priority: int
+    comments: Optional[str] = None
 
 class WorkItemUpdate(BaseModel):
     work_item_name: Optional[str] = None
@@ -112,6 +115,7 @@ class WorkItemUpdate(BaseModel):
     environment: Optional[str] = None
     can_temp_branch: Optional[bool] = None
     priority: Optional[int] = None
+    comments: Optional[str] = None
 
 class AssignmentResult(BaseModel):
     user_id: str
