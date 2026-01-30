@@ -151,7 +151,7 @@ export default function UsersManagement({ token }) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Mbiemri</Label>
+                  <Label htmlFor="last_name">Last Name</Label>
                   <Input
                     id="last_name"
                     value={formData.last_name}
