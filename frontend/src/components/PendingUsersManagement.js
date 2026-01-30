@@ -29,8 +29,7 @@ export default function PendingUsersManagement({ token }) {
   const fetchPendingUsers = async () => {
     try {
       const response = await axios.get(`${API}/pending-users`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        params: { admin_token: token }
       });
       setPendingUsers(response.data);
     } catch (error) {
