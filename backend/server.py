@@ -545,7 +545,7 @@ async def delete_team_conflict(config_id: str, admin_token: str):
 async def create_work_item(item: WorkItemCreate, user_token: str):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user:
-        raise HTTPException(status_code=403, detail="User i pavlefshëm")
+        raise HTTPException(status_code=403, detail="Invalid user")
     
     today = date.today().isoformat()
     
@@ -573,7 +573,7 @@ async def create_work_item(item: WorkItemCreate, user_token: str):
 async def get_work_items(user_token: str, date_filter: Optional[str] = None):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user:
-        raise HTTPException(status_code=403, detail="User i pavlefshëm")
+        raise HTTPException(status_code=403, detail="Invalid user")
     
     query = {}
     if date_filter:
@@ -595,15 +595,15 @@ async def get_work_items(user_token: str, date_filter: Optional[str] = None):
 async def update_work_item(item_id: str, item: WorkItemUpdate, user_token: str):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user:
-        raise HTTPException(status_code=403, detail="User i pavlefshëm")
+        raise HTTPException(status_code=403, detail="Invalid user")
     
     # Check ownership or admin
     existing = await db.work_items.find_one({"id": item_id}, {"_id": 0})
     if not existing:
-        raise HTTPException(status_code=404, detail="Work item nuk u gjet")
+        raise HTTPException(status_code=404, detail="Work item not found")
     
     if user['role'] != 'Admin' and existing['user_id'] != user['id']:
-        raise HTTPException(status_code=403, detail="Nuk keni të drejtë të përditësoni këtë work item")
+        raise HTTPException(status_code=403, detail="You do not have permission to update this work item")
     
     update_data = {k: v for k, v in item.model_dump().items() if v is not None}
     
@@ -618,18 +618,18 @@ async def update_work_item(item_id: str, item: WorkItemUpdate, user_token: str):
 async def delete_work_item(item_id: str, user_token: str):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user:
-        raise HTTPException(status_code=403, detail="User i pavlefshëm")
+        raise HTTPException(status_code=403, detail="Invalid user")
     
     # Check ownership or admin
     existing = await db.work_items.find_one({"id": item_id}, {"_id": 0})
     if not existing:
-        raise HTTPException(status_code=404, detail="Work item nuk u gjet")
+        raise HTTPException(status_code=404, detail="Work item not found")
     
     if user['role'] != 'Admin' and existing['user_id'] != user['id']:
-        raise HTTPException(status_code=403, detail="Nuk keni të drejtë të fshini këtë work item")
+        raise HTTPException(status_code=403, detail="You do not have permission to delete this work item")
     
     await db.work_items.delete_one({"id": item_id})
-    return {"message": "Work item u fshi me sukses"}
+    return {"message": "Work item deleted successfully"}
 
 # Assignment generation
 @api_router.post("/generate-assignments", response_model=List[AssignmentResult])
