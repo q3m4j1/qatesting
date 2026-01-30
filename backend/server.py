@@ -182,10 +182,13 @@ async def startup_event():
 async def login(request: LoginRequest):
     user_doc = await db.users.find_one({"email": request.email}, {"_id": 0})
     if not user_doc:
-        raise HTTPException(status_code=401, detail="Email ose password i gabuar")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     
     if not verify_password(request.password, user_doc['password']):
-        raise HTTPException(status_code=401, detail="Email ose password i gabuar")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if not user_doc.get("approved", True):
+        raise HTTPException(status_code=403, detail="Account pending admin approval")
     
     # Convert datetime
     if isinstance(user_doc['created_at'], str):
@@ -195,6 +198,135 @@ async def login(request: LoginRequest):
     user = User(**user_doc)
     
     return LoginResponse(user=user, token=user.id)
+
+@api_router.post("/auth/oauth/exchange")
+async def oauth_exchange(request_data: SessionExchangeRequest, response: Response):
+    """Exchange session_id from OAuth for session token"""
+    try:
+        oauth_data = await exchange_session_id(request_data.session_id)
+        
+        email = oauth_data["email"]
+        name = oauth_data.get("name", "")
+        picture = oauth_data.get("picture")
+        session_token = oauth_data["session_token"]
+        
+        user_doc = await db.users.find_one({"email": email}, {"_id": 0})
+        
+        if user_doc:
+            if not user_doc.get("approved", False):
+                raise HTTPException(status_code=403, detail="Your account is pending admin approval")
+            
+            await create_session(db, user_doc["id"], session_token)
+            set_session_cookie(response, session_token)
+            
+            if isinstance(user_doc['created_at'], str):
+                user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+            
+            user_doc.pop('password', None)
+            return {"user": user_doc, "status": "approved"}
+        
+        pending_doc = await db.pending_users.find_one({"email": email}, {"_id": 0})
+        
+        if pending_doc:
+            return {"status": "pending", "message": "Your account is awaiting admin approval"}
+        
+        provider = "google"
+        pending_user = PendingUser(
+            email=email,
+            name=name,
+            picture=picture,
+            oauth_provider=provider
+        )
+        
+        doc = pending_user.model_dump()
+        doc['created_at'] = doc['created_at'].isoformat()
+        await db.pending_users.insert_one(doc)
+        
+        return {"status": "pending", "message": "Your account has been submitted for admin approval"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OAuth exchange error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication failed")
+
+@api_router.get("/auth/me")
+async def get_me(request: Request):
+    """Get current authenticated user"""
+    user = await get_current_user(request, db)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    if not user.get("approved", True):
+        raise HTTPException(status_code=403, detail="Account pending approval")
+    
+    return user
+
+@api_router.post("/auth/logout")
+async def logout(request: Request, response: Response):
+    """Logout current user"""
+    await logout_user(request, response, db)
+    return {"message": "Logged out successfully"}
+
+@api_router.get("/pending-users")
+async def get_pending_users(request: Request):
+    """Get all pending users"""
+    user = await get_current_user(request, db)
+    if not user or user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    pending = await db.pending_users.find({}, {"_id": 0}).to_list(1000)
+    for p in pending:
+        if isinstance(p['created_at'], str):
+            p['created_at'] = datetime.fromisoformat(p['created_at'])
+    return pending
+
+@api_router.post("/pending-users/{user_id}/approve")
+async def approve_pending_user(user_id: str, approval: ApproveUserRequest, request: Request):
+    """Approve a pending user"""
+    user = await get_current_user(request, db)
+    if not user or user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    pending_doc = await db.pending_users.find_one({"id": user_id}, {"_id": 0})
+    if not pending_doc:
+        raise HTTPException(status_code=404, detail="Pending user not found")
+    
+    name_parts = pending_doc['name'].split(' ', 1)
+    first_name = name_parts[0] if len(name_parts) > 0 else pending_doc['name']
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+    
+    new_user = User(
+        email=pending_doc['email'],
+        role=approval.role,
+        first_name=first_name,
+        last_name=last_name,
+        team_name=approval.team_name,
+        approved=True,
+        oauth_provider=pending_doc.get('oauth_provider')
+    )
+    
+    doc = new_user.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    doc['password'] = hash_password(str(uuid.uuid4()))
+    
+    await db.users.insert_one(doc)
+    await db.pending_users.delete_one({"id": user_id})
+    
+    return {"message": "User approved successfully", "user": new_user}
+
+@api_router.delete("/pending-users/{user_id}")
+async def reject_pending_user(user_id: str, request: Request):
+    """Reject a pending user"""
+    user = await get_current_user(request, db)
+    if not user or user.get("role") != "Admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.pending_users.delete_one({"id": user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Pending user not found")
+    
+    return {"message": "User rejected successfully"}
 
 # User management routes
 @api_router.post("/users", response_model=User)
