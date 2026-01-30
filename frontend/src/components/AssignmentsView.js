@@ -182,7 +182,7 @@ export default function AssignmentsView({ token }) {
               <div key={env} className="border rounded-lg overflow-hidden" data-testid={`environment-group-${env}`}>
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3">
                   <h3 className="font-bold text-lg">{env}</h3>
-                  <p className="text-sm opacity-90">{envAssignments.length} person(a)</p>
+                  <p className="text-sm opacity-90">{envAssignments.length} person(s)</p>
                 </div>
                 <div className="bg-white">
                   <table className="w-full">
