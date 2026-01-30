@@ -271,10 +271,10 @@ async def logout(request: Request, response: Response):
     return {"message": "Logged out successfully"}
 
 @api_router.get("/pending-users")
-async def get_pending_users(request: Request):
+async def get_pending_users(admin_token: str):
     """Get all pending users"""
-    user = await get_current_user(request, db)
-    if not user or user.get("role") != "Admin":
+    admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
+    if not admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     pending = await db.pending_users.find({}, {"_id": 0}).to_list(1000)
@@ -284,10 +284,10 @@ async def get_pending_users(request: Request):
     return pending
 
 @api_router.post("/pending-users/{user_id}/approve")
-async def approve_pending_user(user_id: str, approval: ApproveUserRequest, request: Request):
+async def approve_pending_user(user_id: str, approval: ApproveUserRequest, admin_token: str):
     """Approve a pending user"""
-    user = await get_current_user(request, db)
-    if not user or user.get("role") != "Admin":
+    admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
+    if not admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     pending_doc = await db.pending_users.find_one({"id": user_id}, {"_id": 0})
@@ -318,10 +318,10 @@ async def approve_pending_user(user_id: str, approval: ApproveUserRequest, reque
     return {"message": "User approved successfully", "user": new_user}
 
 @api_router.delete("/pending-users/{user_id}")
-async def reject_pending_user(user_id: str, request: Request):
+async def reject_pending_user(user_id: str, admin_token: str):
     """Reject a pending user"""
-    user = await get_current_user(request, db)
-    if not user or user.get("role") != "Admin":
+    admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
+    if not admin:
         raise HTTPException(status_code=403, detail="Admin access required")
     
     result = await db.pending_users.delete_one({"id": user_id})
