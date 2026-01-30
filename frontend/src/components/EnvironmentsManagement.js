@@ -137,7 +137,7 @@ export default function EnvironmentsManagement({ token }) {
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="environment-submit-button">
-                  {loading ? 'Saving...' : (editingEnv ? 'Update' : 'Shto')}
+                  {loading ? 'Saving...' : (editingEnv ? 'Update' : 'Add')}
                 </Button>
               </form>
             </DialogContent>

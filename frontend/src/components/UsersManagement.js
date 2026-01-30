@@ -194,7 +194,7 @@ export default function UsersManagement({ token }) {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="user-submit-button">
-                  {loading ? 'Saving...' : (editingUser ? 'Update' : 'Shto')}
+                  {loading ? 'Saving...' : (editingUser ? 'Update' : 'Add')}
                 </Button>
               </form>
             </DialogContent>

@@ -233,7 +233,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       value={formData.comments}
                       onChange={(e) => setFormData({...formData, comments: e.target.value})}
                       data-testid="work-item-comments-input"
-                      placeholder="Shto komente ose shënime..."
+                      placeholder="Add comments or notes..."
                       className="w-full min-h-[80px] px-3 py-2 border rounded-md"
                       rows={3}
                     />
@@ -271,7 +271,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <Button type="submit" className="w-full" disabled={loading} data-testid="work-item-submit-button">
-                    {loading ? 'Saving...' : (editingItem ? 'Update' : 'Shto')}
+                    {loading ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
                   </Button>
                 </form>
               </DialogContent>

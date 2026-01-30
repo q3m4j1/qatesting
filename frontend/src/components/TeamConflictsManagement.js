@@ -179,7 +179,7 @@ export default function TeamConflictsManagement({ token }) {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="team-config-submit-button">
-                  {loading ? 'Saving...' : (editingConfig ? 'Update' : 'Shto')}
+                  {loading ? 'Saving...' : (editingConfig ? 'Update' : 'Add')}
                 </Button>
               </form>
             </DialogContent>

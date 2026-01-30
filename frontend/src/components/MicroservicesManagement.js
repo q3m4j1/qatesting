@@ -116,7 +116,7 @@ export default function MicroservicesManagement({ token }) {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="microservice-submit-button">
-                  {loading ? 'Saving...' : (editingMs ? 'Update' : 'Shto')}
+                  {loading ? 'Saving...' : (editingMs ? 'Update' : 'Add')}
                 </Button>
               </form>
             </DialogContent>
