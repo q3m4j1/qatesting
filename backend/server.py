@@ -493,7 +493,7 @@ async def delete_environment(env_id: str, admin_token: str):
 async def create_team_conflict(config: TeamConflictCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të konfigurojnë ekipet")
+        raise HTTPException(status_code=403, detail="Only admins can configure teams")
     
     config_obj = TeamConflictConfig(**config.model_dump())
     doc = config_obj.model_dump()
@@ -506,7 +506,7 @@ async def create_team_conflict(config: TeamConflictCreate, admin_token: str):
 async def get_team_conflicts(admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të shohin konfigurimin e ekipeve")
+        raise HTTPException(status_code=403, detail="Only admins can view team configuration")
     
     configs = await db.team_conflicts.find({}, {"_id": 0}).to_list(1000)
     for config in configs:
@@ -518,11 +518,11 @@ async def get_team_conflicts(admin_token: str):
 async def update_team_conflict(config_id: str, config: TeamConflictCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të përditësojnë konfigurimin e ekipeve")
+        raise HTTPException(status_code=403, detail="Only admins can update team configuration")
     
     result = await db.team_conflicts.update_one({"id": config_id}, {"$set": config.model_dump()})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Konfigurimi nuk u gjet")
+        raise HTTPException(status_code=404, detail="Configuration not found")
     
     updated_config = await db.team_conflicts.find_one({"id": config_id}, {"_id": 0})
     if isinstance(updated_config['created_at'], str):
@@ -533,12 +533,12 @@ async def update_team_conflict(config_id: str, config: TeamConflictCreate, admin
 async def delete_team_conflict(config_id: str, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë konfigurimin e ekipeve")
+        raise HTTPException(status_code=403, detail="Only admins can delete team configuration")
     
     result = await db.team_conflicts.delete_one({"id": config_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Konfigurimi nuk u gjet")
-    return {"message": "Konfigurimi u fshi me sukses"}
+        raise HTTPException(status_code=404, detail="Configuration not found")
+    return {"message": "Configuration deleted successfully"}
 
 # Work item routes
 @api_router.post("/work-items", response_model=WorkItemRecord)
