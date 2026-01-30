@@ -41,7 +41,7 @@ export default function AssignmentsView({ token }) {
         params: { admin_token: token }
       });
       setAssignments(response.data);
-      toast.success(`Assignments generated successfully! ${response.data.length} assignment(e)`);
+      toast.success(`Assignments generated successfully! ${response.data.length} assignment(s)`);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error generating assignments');
     } finally {
