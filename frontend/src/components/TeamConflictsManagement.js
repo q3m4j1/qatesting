@@ -47,7 +47,7 @@ export default function TeamConflictsManagement({ token }) {
       });
       setUsers(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e userëve');
+      toast.error('Gabim në ngarkimin e usersve');
     }
   };
 
@@ -127,8 +127,8 @@ export default function TeamConflictsManagement({ token }) {
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Konfigurimi i Ekipeve për Temporary Branches</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">Zgjidhni anëtarët e ekipeve që mund të punojnë së bashku në të njëjtin mjedis</p>
+            <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Team Configuration për Temporary Branches</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">Zgjidhni anëtarët e teamsve që mund të punojnë së bashku në të njëjtin mjedis</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
@@ -146,7 +146,7 @@ export default function TeamConflictsManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="team_name">Emri i Ekipit</Label>
+                  <Label htmlFor="team_name">Name i Teamt</Label>
                   <Input
                     id="team_name"
                     value={formData.team_name}
@@ -160,7 +160,7 @@ export default function TeamConflictsManagement({ token }) {
                   <Label>Zgjidhni Anëtarët (që mund të punojnë së bashku)</Label>
                   <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
                     {getTeamUsers().length === 0 ? (
-                      <p className="text-sm text-gray-500">Nuk ka user nga ky ekip</p>
+                      <p className="text-sm text-gray-500">No user nga ky ekip</p>
                     ) : (
                       getTeamUsers().map(user => (
                         <div key={user.id} className="flex items-center space-x-2">
@@ -189,7 +189,7 @@ export default function TeamConflictsManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Search ekipe..."
+            placeholder="Search teams..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="teams-search"

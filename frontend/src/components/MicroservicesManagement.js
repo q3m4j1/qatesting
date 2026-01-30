@@ -28,7 +28,7 @@ export default function MicroservicesManagement({ token }) {
       const response = await axios.get(`${API}/microservices`);
       setMicroservices(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e mikroserviseve');
+      toast.error('Gabim në ngarkimin e microservicesve');
     }
   };
 
@@ -88,7 +88,7 @@ export default function MicroservicesManagement({ token }) {
     <Card className="shadow-lg border-0" data-testid="microservices-management-card">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold" data-testid="microservices-title">Menaxhimi i Mikroserviseve</CardTitle>
+          <CardTitle className="text-xl font-bold" data-testid="microservices-title">Microservice Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
@@ -105,7 +105,7 @@ export default function MicroservicesManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Emri i Mikroservisit</Label>
+                  <Label htmlFor="name">Name i Mikroservisit</Label>
                   <Input
                     id="name"
                     value={name}
@@ -126,7 +126,7 @@ export default function MicroservicesManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Search mikroservise..."
+            placeholder="Search microservices..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="microservices-search"

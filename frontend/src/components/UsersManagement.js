@@ -112,7 +112,7 @@ export default function UsersManagement({ token }) {
     <Card className="shadow-lg border-0" data-testid="users-management-card">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold" data-testid="users-title">Menaxhimi i Userëve</CardTitle>
+          <CardTitle className="text-xl font-bold" data-testid="users-title">User Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
@@ -129,7 +129,7 @@ export default function UsersManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="role">Roli</Label>
+                  <Label htmlFor="role">Role</Label>
                   <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
                     <SelectTrigger data-testid="user-role-select">
                       <SelectValue />
@@ -141,7 +141,7 @@ export default function UsersManagement({ token }) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">Emri</Label>
+                  <Label htmlFor="first_name">Name</Label>
                   <Input
                     id="first_name"
                     value={formData.first_name}
@@ -184,7 +184,7 @@ export default function UsersManagement({ token }) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="team_name">Emri i Ekipit</Label>
+                  <Label htmlFor="team_name">Name i Teamt</Label>
                   <Input
                     id="team_name"
                     value={formData.team_name}
@@ -204,7 +204,7 @@ export default function UsersManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Search userë..."
+            placeholder="Search users..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="users-search"
@@ -215,11 +215,11 @@ export default function UsersManagement({ token }) {
           <table className="w-full" data-testid="users-table">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-3 px-4 font-semibold">Emri</th>
+                <th className="text-left py-3 px-4 font-semibold">Name</th>
                 <th className="text-left py-3 px-4 font-semibold">Email</th>
-                <th className="text-left py-3 px-4 font-semibold">Roli</th>
-                <th className="text-left py-3 px-4 font-semibold">Ekipi</th>
-                <th className="text-right py-3 px-4 font-semibold">Veprime</th>
+                <th className="text-left py-3 px-4 font-semibold">Role</th>
+                <th className="text-left py-3 px-4 font-semibold">Team</th>
+                <th className="text-right py-3 px-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>

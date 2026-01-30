@@ -32,7 +32,7 @@ export default function EnvironmentsManagement({ token }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e mjediseve');
+      toast.error('Gabim në ngarkimin e environmentsve');
     }
   };
 
@@ -98,7 +98,7 @@ export default function EnvironmentsManagement({ token }) {
     <Card className="shadow-lg border-0" data-testid="environments-management-card">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold" data-testid="environments-title">Menaxhimi i Mjediseve</CardTitle>
+          <CardTitle className="text-xl font-bold" data-testid="environments-title">Environment Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
             if (!open) resetForm();
@@ -115,7 +115,7 @@ export default function EnvironmentsManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Emri i Mjedisit</Label>
+                  <Label htmlFor="name">Name i Mjedisit</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -147,7 +147,7 @@ export default function EnvironmentsManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Search mjedise..."
+            placeholder="Search environments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="environments-search"

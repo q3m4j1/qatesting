@@ -59,7 +59,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       });
       setFormData(prev => ({ ...prev, microservices: msObj }));
     } catch (error) {
-      toast.error('Gabim në ngarkimin e mikroserviseve');
+      toast.error('Gabim në ngarkimin e microservicesve');
     }
   };
 
@@ -68,7 +68,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e mjediseve');
+      toast.error('Gabim në ngarkimin e environmentsve');
     }
   };
 
@@ -163,7 +163,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold" data-testid="work-items-title">
-              {isAdmin ? 'Të gjitha Work Items' : 'Work Items të mia'}
+              {isAdmin ? 'All Work Items' : 'My Work Items'}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">
               {new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -185,7 +185,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="work_item_name">Emri i Work Item</Label>
+                    <Label htmlFor="work_item_name">Name i Work Item</Label>
                     <Input
                       id="work_item_name"
                       value={formData.work_item_name}
@@ -203,10 +203,10 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="1">1 - Kritik</SelectItem>
-                        <SelectItem value="2">2 - I lartë</SelectItem>
-                        <SelectItem value="3">3 - Mesatar</SelectItem>
-                        <SelectItem value="4">4 - I ulët</SelectItem>
+                        <SelectItem value="1">1 - Critical</SelectItem>
+                        <SelectItem value="2">2 - High</SelectItem>
+                        <SelectItem value="3">3 - Medium</SelectItem>
+                        <SelectItem value="4">4 - Low</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -227,7 +227,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="comments">Komente (opsionale)</Label>
+                    <Label htmlFor="comments">Comments (opsionale)</Label>
                     <textarea
                       id="comments"
                       value={formData.comments}
@@ -252,7 +252,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label>Mikroserviset</Label>
+                    <Label>Microservices</Label>
                     <div className="border rounded-md p-4 max-h-64 overflow-y-auto grid grid-cols-2 gap-3">
                       {microservices.map(ms => (
                         <div key={ms.id} className="flex items-center space-x-2">
@@ -295,13 +295,13 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             <thead>
               <tr className="border-b">
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">User</th>}
-                {isAdmin && <th className="text-left py-3 px-4 font-semibold">Ekipi</th>}
+                {isAdmin && <th className="text-left py-3 px-4 font-semibold">Team</th>}
                 <th className="text-left py-3 px-4 font-semibold">Work Item</th>
                 <th className="text-left py-3 px-4 font-semibold">Priority</th>
                 <th className="text-left py-3 px-4 font-semibold">Assigned Env</th>
-                <th className="text-left py-3 px-4 font-semibold">Mikroserviset</th>
+                <th className="text-left py-3 px-4 font-semibold">Microservices</th>
                 <th className="text-left py-3 px-4 font-semibold">Temp Branch</th>
-                <th className="text-right py-3 px-4 font-semibold">Veprime</th>
+                <th className="text-right py-3 px-4 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -327,9 +327,9 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                         item.priority === 3 ? 'bg-yellow-100 text-yellow-700' :
                         'bg-green-100 text-green-700'
                       }`}>
-                        {item.priority === 1 ? 'Kritik' :
-                         item.priority === 2 ? 'I lartë' :
-                         item.priority === 3 ? 'Mesatar' : 'I ulët'}
+                        {item.priority === 1 ? 'Critical' :
+                         item.priority === 2 ? 'High' :
+                         item.priority === 3 ? 'Medium' : 'Low'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -387,7 +387,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
           </table>
           {workItems.length === 0 && (
             <div className="text-center py-12 text-gray-500" data-testid="no-work-items">
-              <p>Nuk ka work items për të ditën e sotme</p>
+              <p>No work items për të ditën e sotme</p>
             </div>
           )}
         </div>
