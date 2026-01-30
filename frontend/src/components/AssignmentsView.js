@@ -173,8 +173,8 @@ export default function AssignmentsView({ token }) {
         {Object.keys(groupedAssignments).length === 0 ? (
           <div className="text-center py-12 text-gray-500" data-testid="no-assignments">
             <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No shpërndarje akoma</p>
-            <p className="text-sm mt-2">Kliko "Gjenero Listen" për të krijuar shpërndarjen e ditës së sotme</p>
+            <p className="text-lg font-medium">No assignments yet</p>
+            <p className="text-sm mt-2">Click "Generate List" to create today's assignments</p>
           </div>
         ) : (
           <div className="space-y-6">
