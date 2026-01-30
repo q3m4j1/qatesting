@@ -36,7 +36,7 @@ export default function TeamConflictsManagement({ token }) {
       });
       setConfigs(response.data);
     } catch (error) {
-      toast.error('Error loading konfigurimeve');
+      toast.error('Error loading configurations');
     }
   };
 
@@ -47,7 +47,7 @@ export default function TeamConflictsManagement({ token }) {
       });
       setUsers(response.data);
     } catch (error) {
-      toast.error('Error loading usersve');
+      toast.error('Error loading users');
     }
   };
 
@@ -60,35 +60,35 @@ export default function TeamConflictsManagement({ token }) {
         await axios.put(`${API}/team-conflicts/${editingConfig.id}`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Konfigurimi updated successfully!');
+        toast.success('Configuration updated successfully!');
       } else {
         await axios.post(`${API}/team-conflicts`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Konfigurimi created successfully!');
+        toast.success('Configuration created successfully!');
       }
       
       fetchConfigs();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error saving konfigurimit');
+      toast.error(error.response?.data?.detail || 'Error saving configurationit');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (configId) => {
-    if (!window.confirm('Are you sure you want to delete this konfigurim?')) return;
+    if (!window.confirm('Are you sure you want to delete this configuration?')) return;
 
     try {
       await axios.delete(`${API}/team-conflicts/${configId}`, {
         params: { admin_token: token }
       });
-      toast.success('Konfigurimi deleted successfully!');
+      toast.success('Configuration deleted successfully!');
       fetchConfigs();
     } catch (error) {
-      toast.error('Error deleting konfigurimit');
+      toast.error('Error deleting configurationit');
     }
   };
 
@@ -128,7 +128,7 @@ export default function TeamConflictsManagement({ token }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Team Configuration for Temporary Branches</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">Select members of teamsve who can work together in the same environment</p>
+            <p className="text-sm text-gray-600 mt-1">Select members of teams who can work together in the same environment</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
@@ -142,7 +142,7 @@ export default function TeamConflictsManagement({ token }) {
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="team-config-dialog">
               <DialogHeader>
-                <DialogTitle>{editingConfig ? 'Update Konfigurimin' : 'Add Configuration New'}</DialogTitle>
+                <DialogTitle>{editingConfig ? 'Update Configurationn' : 'Add Configuration New'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

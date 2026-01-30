@@ -28,7 +28,7 @@ export default function MicroservicesManagement({ token }) {
       const response = await axios.get(`${API}/microservices`);
       setMicroservices(response.data);
     } catch (error) {
-      toast.error('Error loading microservicesve');
+      toast.error('Error loading microservices');
     }
   };
 

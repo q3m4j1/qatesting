@@ -59,7 +59,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       });
       setFormData(prev => ({ ...prev, microservices: msObj }));
     } catch (error) {
-      toast.error('Error loading microservicesve');
+      toast.error('Error loading microservices');
     }
   };
 
@@ -68,7 +68,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Error loading environmentsve');
+      toast.error('Error loading environments');
     }
   };
 

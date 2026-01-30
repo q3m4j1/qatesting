@@ -32,7 +32,7 @@ export default function EnvironmentsManagement({ token }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Error loading environmentsve');
+      toast.error('Error loading environments');
     }
   };
 
