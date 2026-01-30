@@ -397,7 +397,7 @@ async def delete_user(user_id: str, admin_token: str):
 async def create_microservice(ms: MicroserviceCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të shtojnë mikroservise")
+        raise HTTPException(status_code=403, detail="Only admins can add microservices")
     
     ms_obj = MicroserviceConfig(name=ms.name)
     doc = ms_obj.model_dump()
@@ -418,11 +418,11 @@ async def get_microservices():
 async def update_microservice(ms_id: str, ms: MicroserviceCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të përditësojnë mikroserviset")
+        raise HTTPException(status_code=403, detail="Only admins can update microservices")
     
     result = await db.microservices.update_one({"id": ms_id}, {"$set": {"name": ms.name}})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Mikroservisi nuk u gjet")
+        raise HTTPException(status_code=404, detail="Microservice not found")
     
     updated_ms = await db.microservices.find_one({"id": ms_id}, {"_id": 0})
     if isinstance(updated_ms['created_at'], str):
@@ -433,12 +433,12 @@ async def update_microservice(ms_id: str, ms: MicroserviceCreate, admin_token: s
 async def delete_microservice(ms_id: str, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë mikroserviset")
+        raise HTTPException(status_code=403, detail="Only admins can delete microservices")
     
     result = await db.microservices.delete_one({"id": ms_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Mikroservisi nuk u gjet")
-    return {"message": "Mikroservisi u fshi me sukses"}
+        raise HTTPException(status_code=404, detail="Microservice not found")
+    return {"message": "Microservice deleted successfully"}
 
 # Environment routes
 @api_router.post("/environments", response_model=EnvironmentConfig)
