@@ -7,6 +7,7 @@ import EnvironmentsManagement from '../components/EnvironmentsManagement';
 import TeamConflictsManagement from '../components/TeamConflictsManagement';
 import WorkItemsView from '../components/WorkItemsView';
 import AssignmentsView from '../components/AssignmentsView';
+import PendingUsersManagement from '../components/PendingUsersManagement';
 
 export default function AdminDashboard({ user, token, onLogout }) {
   const [activeTab, setActiveTab] = useState('users');
