@@ -37,17 +37,22 @@ export default function AdminDashboard({ user, token, onLogout }) {
 
       <div className="container mx-auto px-6 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-white shadow-md p-1 rounded-xl grid grid-cols-6 gap-1" data-testid="admin-tabs">
-            <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-users">Userët</TabsTrigger>
+          <TabsList className="bg-white shadow-md p-1 rounded-xl grid grid-cols-7 gap-1" data-testid="admin-tabs">
+            <TabsTrigger value="users" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-users">Users</TabsTrigger>
+            <TabsTrigger value="pending" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-pending">Pending</TabsTrigger>
             <TabsTrigger value="microservices" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-microservices">Microservices</TabsTrigger>
-            <TabsTrigger value="environments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-environments">Mjediset</TabsTrigger>
-            <TabsTrigger value="teams" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-teams">Ekipet</TabsTrigger>
+            <TabsTrigger value="environments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-environments">Environments</TabsTrigger>
+            <TabsTrigger value="teams" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-teams">Teams</TabsTrigger>
             <TabsTrigger value="workitems" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-workitems">Work Items</TabsTrigger>
-            <TabsTrigger value="assignments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-assignments">Shpërndarja</TabsTrigger>
+            <TabsTrigger value="assignments" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-cyan-500 data-[state=active]:text-white rounded-lg transition-all" data-testid="tab-assignments">Assignments</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
             <UsersManagement token={token} />
+          </TabsContent>
+
+          <TabsContent value="pending">
+            <PendingUsersManagement token={token} />
           </TabsContent>
 
           <TabsContent value="microservices">
