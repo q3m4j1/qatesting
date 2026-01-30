@@ -163,7 +163,9 @@ async def init_default_admin():
                 role="Admin",
                 first_name="Test",
                 last_name="Admin",
-                team_name="Admin Team"
+                team_name="Admin Team",
+                approved=True,
+                oauth_provider=None
             )
             doc = admin.model_dump()
             doc['created_at'] = doc['created_at'].isoformat()
