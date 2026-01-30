@@ -27,7 +27,7 @@ export default function AssignmentsView({ token }) {
     } catch (error) {
       // If no assignments yet, it's okay
       if (error.response?.status !== 404) {
-        toast.error('Gabim në ngarkimin e shpërndarjes');
+        toast.error('Error loading shpërndarjes');
       }
     } finally {
       setLoading(false);

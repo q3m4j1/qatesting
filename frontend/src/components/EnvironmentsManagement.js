@@ -32,7 +32,7 @@ export default function EnvironmentsManagement({ token }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e environmentsve');
+      toast.error('Error loading environmentsve');
     }
   };
 
@@ -45,35 +45,35 @@ export default function EnvironmentsManagement({ token }) {
         await axios.put(`${API}/environments/${editingEnv.id}`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Mjedisi u përditësua me sukses!');
+        toast.success('Mjedisi updated successfully!');
       } else {
         await axios.post(`${API}/environments`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Mjedisi u krijua me sukses!');
+        toast.success('Mjedisi created successfully!');
       }
       
       fetchEnvironments();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e mjedisit');
+      toast.error(error.response?.data?.detail || 'Error saving mjedisit');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (envId) => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë mjedis?')) return;
+    if (!window.confirm('Are you sure you want to delete this mjedis?')) return;
 
     try {
       await axios.delete(`${API}/environments/${envId}`, {
         params: { admin_token: token }
       });
-      toast.success('Mjedisi u fshi me sukses!');
+      toast.success('Mjedisi deleted successfully!');
       fetchEnvironments();
     } catch (error) {
-      toast.error('Gabim në fshirjen e mjedisit');
+      toast.error('Error deleting mjedisit');
     }
   };
 
@@ -111,7 +111,7 @@ export default function EnvironmentsManagement({ token }) {
             </DialogTrigger>
             <DialogContent data-testid="environment-dialog">
               <DialogHeader>
-                <DialogTitle>{editingEnv ? 'Update Mjedisin' : 'Add Environment të Ri'}</DialogTitle>
+                <DialogTitle>{editingEnv ? 'Update Mjedisin' : 'Add Environment New'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

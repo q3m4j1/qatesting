@@ -38,7 +38,7 @@ export default function UsersManagement({ token }) {
       });
       setUsers(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e userave');
+      toast.error('Error loading userave');
     }
   };
 
@@ -51,35 +51,35 @@ export default function UsersManagement({ token }) {
         await axios.put(`${API}/users/${editingUser.id}`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Useri u përditësua me sukses!');
+        toast.success('Useri updated successfully!');
       } else {
         await axios.post(`${API}/users`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Useri u krijua me sukses!');
+        toast.success('Useri created successfully!');
       }
       
       fetchUsers();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e userit');
+      toast.error(error.response?.data?.detail || 'Error saving userit');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (userId) => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë user?')) return;
+    if (!window.confirm('Are you sure you want to delete this user?')) return;
 
     try {
       await axios.delete(`${API}/users/${userId}`, {
         params: { admin_token: token }
       });
-      toast.success('Useri u fshi me sukses!');
+      toast.success('Useri deleted successfully!');
       fetchUsers();
     } catch (error) {
-      toast.error('Gabim në fshirjen e userit');
+      toast.error('Error deleting userit');
     }
   };
 
@@ -125,7 +125,7 @@ export default function UsersManagement({ token }) {
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="user-dialog">
               <DialogHeader>
-                <DialogTitle>{editingUser ? 'Update Userin' : 'Add User të Ri'}</DialogTitle>
+                <DialogTitle>{editingUser ? 'Update Userin' : 'Add User New'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

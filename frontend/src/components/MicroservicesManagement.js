@@ -28,7 +28,7 @@ export default function MicroservicesManagement({ token }) {
       const response = await axios.get(`${API}/microservices`);
       setMicroservices(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e microservicesve');
+      toast.error('Error loading microservicesve');
     }
   };
 
@@ -41,35 +41,35 @@ export default function MicroservicesManagement({ token }) {
         await axios.put(`${API}/microservices/${editingMs.id}`, { name }, {
           params: { admin_token: token }
         });
-        toast.success('Mikroservisi u përditësua me sukses!');
+        toast.success('Mikroservisi updated successfully!');
       } else {
         await axios.post(`${API}/microservices`, { name }, {
           params: { admin_token: token }
         });
-        toast.success('Mikroservisi u krijua me sukses!');
+        toast.success('Mikroservisi created successfully!');
       }
       
       fetchMicroservices();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e mikroservisit');
+      toast.error(error.response?.data?.detail || 'Error saving mikroservisit');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (msId) => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë mikroservis?')) return;
+    if (!window.confirm('Are you sure you want to delete this mikroservis?')) return;
 
     try {
       await axios.delete(`${API}/microservices/${msId}`, {
         params: { admin_token: token }
       });
-      toast.success('Mikroservisi u fshi me sukses!');
+      toast.success('Mikroservisi deleted successfully!');
       fetchMicroservices();
     } catch (error) {
-      toast.error('Gabim në fshirjen e mikroservisit');
+      toast.error('Error deleting mikroservisit');
     }
   };
 
@@ -101,7 +101,7 @@ export default function MicroservicesManagement({ token }) {
             </DialogTrigger>
             <DialogContent data-testid="microservice-dialog">
               <DialogHeader>
-                <DialogTitle>{editingMs ? 'Update Mikroservisin' : 'Add Microservice të Ri'}</DialogTitle>
+                <DialogTitle>{editingMs ? 'Update Mikroservisin' : 'Add Microservice New'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

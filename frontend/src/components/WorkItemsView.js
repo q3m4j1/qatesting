@@ -43,7 +43,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       });
       setWorkItems(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e work items');
+      toast.error('Error loading work items');
     }
   };
 
@@ -59,7 +59,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       });
       setFormData(prev => ({ ...prev, microservices: msObj }));
     } catch (error) {
-      toast.error('Gabim në ngarkimin e microservicesve');
+      toast.error('Error loading microservicesve');
     }
   };
 
@@ -68,7 +68,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       const response = await axios.get(`${API}/environments`);
       setEnvironments(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e environmentsve');
+      toast.error('Error loading environmentsve');
     }
   };
 
@@ -81,35 +81,35 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         await axios.put(`${API}/work-items/${editingItem.id}`, formData, {
           params: { user_token: token }
         });
-        toast.success('Work item u përditësua me sukses!');
+        toast.success('Work item updated successfully!');
       } else {
         await axios.post(`${API}/work-items`, formData, {
           params: { user_token: token }
         });
-        toast.success('Work item u krijua me sukses!');
+        toast.success('Work item created successfully!');
       }
       
       fetchWorkItems();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e work item');
+      toast.error(error.response?.data?.detail || 'Error saving work item');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (itemId) => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë work item?')) return;
+    if (!window.confirm('Are you sure you want to delete this work item?')) return;
 
     try {
       await axios.delete(`${API}/work-items/${itemId}`, {
         params: { user_token: token }
       });
-      toast.success('Work item u fshi me sukses!');
+      toast.success('Work item deleted successfully!');
       fetchWorkItems();
     } catch (error) {
-      toast.error('Gabim në fshirjen e work item');
+      toast.error('Error deleting work item');
     }
   };
 
@@ -181,7 +181,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="work-item-dialog">
                 <DialogHeader>
-                  <DialogTitle>{editingItem ? 'Update Work Item' : 'Add Work Item të Ri'}</DialogTitle>
+                  <DialogTitle>{editingItem ? 'Update Work Item' : 'Add Work Item New'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
@@ -197,7 +197,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="priority">Priority (1=Më i lartë, 4=Më i ulët) *</Label>
+                    <Label htmlFor="priority">Priority (1=Highest, 4=Lowest) *</Label>
                     <Select value={formData.priority.toString()} onValueChange={(value) => setFormData({...formData, priority: parseInt(value)})}>
                       <SelectTrigger data-testid="work-item-priority-select">
                         <SelectValue />
@@ -215,7 +215,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     <Label htmlFor="environment">Environment (opsionale)</Label>
                     <Select value={formData.environment} onValueChange={(value) => setFormData({...formData, environment: value})}>
                       <SelectTrigger data-testid="work-item-environment-select">
-                        <SelectValue placeholder="Zgjidhni environment" />
+                        <SelectValue placeholder="Select environment" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">Asnjë</SelectItem>
@@ -247,7 +247,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       data-testid="work-item-temp-branch-switch"
                     />
                     <Label htmlFor="can_temp_branch" className="cursor-pointer">
-                      A mund të bëhet temp me anëtarët e ekipit?
+                      A mund të bëhet temp me members of ekipit?
                     </Label>
                   </div>
 

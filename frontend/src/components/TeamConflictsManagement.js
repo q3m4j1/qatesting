@@ -36,7 +36,7 @@ export default function TeamConflictsManagement({ token }) {
       });
       setConfigs(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e konfigurimeve');
+      toast.error('Error loading konfigurimeve');
     }
   };
 
@@ -47,7 +47,7 @@ export default function TeamConflictsManagement({ token }) {
       });
       setUsers(response.data);
     } catch (error) {
-      toast.error('Gabim në ngarkimin e usersve');
+      toast.error('Error loading usersve');
     }
   };
 
@@ -60,35 +60,35 @@ export default function TeamConflictsManagement({ token }) {
         await axios.put(`${API}/team-conflicts/${editingConfig.id}`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Konfigurimi u përditësua me sukses!');
+        toast.success('Konfigurimi updated successfully!');
       } else {
         await axios.post(`${API}/team-conflicts`, formData, {
           params: { admin_token: token }
         });
-        toast.success('Konfigurimi u krijua me sukses!');
+        toast.success('Konfigurimi created successfully!');
       }
       
       fetchConfigs();
       setDialogOpen(false);
       resetForm();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në ruajtjen e konfigurimit');
+      toast.error(error.response?.data?.detail || 'Error saving konfigurimit');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (configId) => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini këtë konfigurim?')) return;
+    if (!window.confirm('Are you sure you want to delete this konfigurim?')) return;
 
     try {
       await axios.delete(`${API}/team-conflicts/${configId}`, {
         params: { admin_token: token }
       });
-      toast.success('Konfigurimi u fshi me sukses!');
+      toast.success('Konfigurimi deleted successfully!');
       fetchConfigs();
     } catch (error) {
-      toast.error('Gabim në fshirjen e konfigurimit');
+      toast.error('Error deleting konfigurimit');
     }
   };
 
@@ -127,8 +127,8 @@ export default function TeamConflictsManagement({ token }) {
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Team Configuration për Temporary Branches</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">Zgjidhni anëtarët e teamsve që mund të punojnë së bashku në të njëjtin mjedis</p>
+            <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Team Configuration for Temporary Branches</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">Select members of teamsve who can work together in the same environment</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
@@ -142,7 +142,7 @@ export default function TeamConflictsManagement({ token }) {
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="team-config-dialog">
               <DialogHeader>
-                <DialogTitle>{editingConfig ? 'Update Konfigurimin' : 'Add Configuration të Ri'}</DialogTitle>
+                <DialogTitle>{editingConfig ? 'Update Konfigurimin' : 'Add Configuration New'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -157,7 +157,7 @@ export default function TeamConflictsManagement({ token }) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Zgjidhni Anëtarët (që mund të punojnë së bashku)</Label>
+                  <Label>Select Anëtarët (who can work together)</Label>
                   <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
                     {getTeamUsers().length === 0 ? (
                       <p className="text-sm text-gray-500">No user nga ky ekip</p>
