@@ -41,7 +41,7 @@ export default function LoginPage({ onLogin }) {
 
   const handleAzureLogin = () => {
     const redirectUrl = window.location.origin + '/dashboard';
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}&provider=azure`;
+    window.location.href = `https://auth.emergentagent.com/azure?redirect=${encodeURIComponent(redirectUrl)}`;
   };
 
   return (
