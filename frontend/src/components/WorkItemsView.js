@@ -166,7 +166,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
               {isAdmin ? 'All Work Items' : 'My Work Items'}
             </CardTitle>
             <p className="text-sm text-gray-600 mt-1">
-              {new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
