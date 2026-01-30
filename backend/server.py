@@ -336,14 +336,14 @@ async def create_user(user: UserCreate, admin_token: str):
     # Verify admin
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të krijojnë userë")
+        raise HTTPException(status_code=403, detail="Only admins can create users")
     
     # Check if email exists
     existing = await db.users.find_one({"email": user.email})
     if existing:
-        raise HTTPException(status_code=400, detail="Email-i ekziston tashmë")
+        raise HTTPException(status_code=400, detail="Email already exists")
     
-    user_obj = User(**user.model_dump(exclude={'password'}))
+    user_obj = User(**user.model_dump(exclude={'password'}), approved=True, oauth_provider=None)
     doc = user_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     doc['password'] = hash_password(user.password)
@@ -355,7 +355,7 @@ async def create_user(user: UserCreate, admin_token: str):
 async def get_users(admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të shohin userët")
+        raise HTTPException(status_code=403, detail="Only admins can view users")
     
     users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
     for user in users:
@@ -367,14 +367,14 @@ async def get_users(admin_token: str):
 async def update_user(user_id: str, user: UserCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të përditësojnë userët")
+        raise HTTPException(status_code=403, detail="Only admins can update users")
     
     update_data = user.model_dump()
     update_data['password'] = hash_password(user.password)
     
     result = await db.users.update_one({"id": user_id}, {"$set": update_data})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Useri nuk u gjet")
+        raise HTTPException(status_code=404, detail="User not found")
     
     updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
     if isinstance(updated_user['created_at'], str):
@@ -385,12 +385,12 @@ async def update_user(user_id: str, user: UserCreate, admin_token: str):
 async def delete_user(user_id: str, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë userët")
+        raise HTTPException(status_code=403, detail="Only admins can delete users")
     
     result = await db.users.delete_one({"id": user_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Useri nuk u gjet")
-    return {"message": "Useri u fshi me sukses"}
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
 
 # Microservice routes
 @api_router.post("/microservices", response_model=MicroserviceConfig)
