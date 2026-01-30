@@ -445,7 +445,7 @@ async def delete_microservice(ms_id: str, admin_token: str):
 async def create_environment(env: EnvironmentCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të shtojnë mjedise")
+        raise HTTPException(status_code=403, detail="Only admins can add environments")
     
     env_obj = EnvironmentConfig(name=env.name, is_second=env.is_second)
     doc = env_obj.model_dump()
@@ -466,11 +466,11 @@ async def get_environments():
 async def update_environment(env_id: str, env: EnvironmentCreate, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të përditësojnë mjediset")
+        raise HTTPException(status_code=403, detail="Only admins can update environments")
     
     result = await db.environments.update_one({"id": env_id}, {"$set": {"name": env.name, "is_second": env.is_second}})
     if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Mjedisi nuk u gjet")
+        raise HTTPException(status_code=404, detail="Environment not found")
     
     updated_env = await db.environments.find_one({"id": env_id}, {"_id": 0})
     if isinstance(updated_env['created_at'], str):
@@ -481,12 +481,12 @@ async def update_environment(env_id: str, env: EnvironmentCreate, admin_token: s
 async def delete_environment(env_id: str, admin_token: str):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë mjediset")
+        raise HTTPException(status_code=403, detail="Only admins can delete environments")
     
     result = await db.environments.delete_one({"id": env_id})
     if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Mjedisi nuk u gjet")
-    return {"message": "Mjedisi u fshi me sukses"}
+        raise HTTPException(status_code=404, detail="Environment not found")
+    return {"message": "Environment deleted successfully"}
 
 # Team conflict config routes
 @api_router.post("/team-conflicts", response_model=TeamConflictConfig)
