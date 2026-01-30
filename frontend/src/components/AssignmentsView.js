@@ -50,7 +50,7 @@ export default function AssignmentsView({ token }) {
   };
 
   const deleteAssignments = async () => {
-    if (!window.confirm('Jeni i sigurt që dëshironi të fshini shpërndarjen e sotme?')) return;
+    if (!window.confirm('Are you sure you want to delete today\'s assignments?')) return;
 
     setLoading(true);
     try {
@@ -58,12 +58,50 @@ export default function AssignmentsView({ token }) {
         params: { admin_token: token }
       });
       setAssignments([]);
-      toast.success('Shpërndarja u fshi me sukses!');
+      toast.success('Assignments deleted successfully!');
     } catch (error) {
-      toast.error('Gabim në fshirjen e shpërndarjes');
+      toast.error('Error deleting assignments');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShare = () => {
+    const today = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
+    let shareText = `Testing Environment Assignments - ${today}\n`;
+    shareText += '='.repeat(50) + '\n\n';
+    
+    Object.entries(groupedAssignments).forEach(([env, envAssignments]) => {
+      shareText += `📍 ${env} (${envAssignments.length} person${envAssignments.length > 1 ? 's' : ''})\n`;
+      shareText += '-'.repeat(50) + '\n';
+      
+      envAssignments.forEach((assignment, idx) => {
+        shareText += `${idx + 1}. ${assignment.user_name} (${assignment.team_name})\n`;
+        shareText += `   Work Item: ${assignment.work_item_name}\n`;
+        shareText += `   Microservices: ${assignment.microservices.join(', ')}\n`;
+        if (assignment.is_temp_branch) {
+          shareText += `   ⚠️  Temp Branch Mode\n`;
+        }
+        if (assignment.conflicts && assignment.conflicts.length > 0) {
+          shareText += `   ⚠️  Conflicts: ${assignment.conflicts.join(', ')}\n`;
+        }
+        shareText += '\n';
+      });
+      shareText += '\n';
+    });
+    
+    // Copy to clipboard
+    navigator.clipboard.writeText(shareText).then(() => {
+      toast.success('Assignments copied to clipboard!');
+    }).catch(() => {
+      toast.error('Failed to copy to clipboard');
+    });
   };
 
   // Group assignments by environment
