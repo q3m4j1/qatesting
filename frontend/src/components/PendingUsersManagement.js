@@ -181,12 +181,17 @@ export default function PendingUsersManagement({ token }) {
             </div>
             <div className="space-y-2">
               <Label>Team Name</Label>
-              <Input
-                value={formData.team_name}
-                onChange={(e) => setFormData({...formData, team_name: e.target.value})}
-                placeholder="e.g., Development Team"
-                required
-              />
+              <Select value={formData.team_name} onValueChange={(value) => setFormData({...formData, team_name: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select team" />
+                </SelectTrigger>
+                <SelectContent>
+                  {teams.map(team => (
+                    <SelectItem key={team} value={team}>{team}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">If team doesn't exist, add it in Teams tab first</p>
             </div>
             <Button 
               onClick={confirmApprove} 
