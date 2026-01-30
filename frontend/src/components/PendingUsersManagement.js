@@ -14,6 +14,7 @@ const API = `${BACKEND_URL}/api`;
 
 export default function PendingUsersManagement({ token }) {
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,21 @@ export default function PendingUsersManagement({ token }) {
 
   useEffect(() => {
     fetchPendingUsers();
+    fetchTeams();
   }, []);
+
+  const fetchTeams = async () => {
+    try {
+      const response = await axios.get(`${API}/team-conflicts`, {
+        params: { admin_token: token }
+      });
+      // Extract unique team names
+      const uniqueTeams = [...new Set(response.data.map(config => config.team_name))];
+      setTeams(uniqueTeams);
+    } catch (error) {
+      console.error('Error loading teams:', error);
+    }
+  };
 
   const fetchPendingUsers = async () => {
     try {
