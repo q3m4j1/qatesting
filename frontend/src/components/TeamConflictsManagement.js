@@ -146,7 +146,7 @@ export default function TeamConflictsManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="team_name">Name i Teamt</Label>
+                  <Label htmlFor="team_name">Team Name</Label>
                   <Input
                     id="team_name"
                     value={formData.team_name}
@@ -160,7 +160,7 @@ export default function TeamConflictsManagement({ token }) {
                   <Label>Select Anëtarët (who can work together)</Label>
                   <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
                     {getTeamUsers().length === 0 ? (
-                      <p className="text-sm text-gray-500">No user nga ky ekip</p>
+                      <p className="text-sm text-gray-500">No users from this team</p>
                     ) : (
                       getTeamUsers().map(user => (
                         <div key={user.id} className="flex items-center space-x-2">

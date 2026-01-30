@@ -115,7 +115,7 @@ export default function EnvironmentsManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name i Mjedisit</Label>
+                  <Label htmlFor="name">Environment Name</Label>
                   <Input
                     id="name"
                     value={formData.name}
@@ -133,7 +133,7 @@ export default function EnvironmentsManagement({ token }) {
                     data-testid="environment-second-switch"
                   />
                   <Label htmlFor="is_second" className="cursor-pointer">
-                    Mjedis "Second" (vetëm për Front)
+                    Second Environment (Front only)
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="environment-submit-button">

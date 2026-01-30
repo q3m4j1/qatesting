@@ -179,12 +179,12 @@ export default function UsersManagement({ token }) {
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     required={!editingUser}
-                    placeholder={editingUser ? 'Lëre bosh për të mbajtur të njëjtin' : ''}
+                    placeholder={editingUser ? 'Leave blank to keep the same' : ''}
                     data-testid="user-password-input"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="team_name">Name i Teamt</Label>
+                  <Label htmlFor="team_name">Team Name</Label>
                   <Input
                     id="team_name"
                     value={formData.team_name}

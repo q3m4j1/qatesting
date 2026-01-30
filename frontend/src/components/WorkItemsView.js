@@ -185,7 +185,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="work_item_name">Name i Work Item</Label>
+                    <Label htmlFor="work_item_name">Work Item Name</Label>
                     <Input
                       id="work_item_name"
                       value={formData.work_item_name}
@@ -247,7 +247,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       data-testid="work-item-temp-branch-switch"
                     />
                     <Label htmlFor="can_temp_branch" className="cursor-pointer">
-                      A mund të bëhet temp me members of ekipit?
+                      Can create temp branches with team members?
                     </Label>
                   </div>
 
@@ -387,7 +387,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
           </table>
           {workItems.length === 0 && (
             <div className="text-center py-12 text-gray-500" data-testid="no-work-items">
-              <p>No work items për të ditën e sotme</p>
+              <p>No work items for today</p>
             </div>
           )}
         </div>

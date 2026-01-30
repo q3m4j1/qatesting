@@ -105,7 +105,7 @@ export default function MicroservicesManagement({ token }) {
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name i Mikroservisit</Label>
+                  <Label htmlFor="name">Microservice Name</Label>
                   <Input
                     id="name"
                     value={name}

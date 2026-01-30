@@ -27,7 +27,7 @@ export default function AssignmentsView({ token }) {
     } catch (error) {
       // If no assignments yet, it's okay
       if (error.response?.status !== 404) {
-        toast.error('Error loading shpërndarjes');
+        toast.error('Error loading assignments');
       }
     } finally {
       setLoading(false);
@@ -41,9 +41,9 @@ export default function AssignmentsView({ token }) {
         params: { admin_token: token }
       });
       setAssignments(response.data);
-      toast.success(`Shpërndarja u gjenerua me sukses! ${response.data.length} assignment(e)`);
+      toast.success(`Assignments generated successfully! ${response.data.length} assignment(e)`);
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Gabim në gjenerimin e shpërndarjes');
+      toast.error(error.response?.data?.detail || 'Error generating assignments');
     } finally {
       setGenerating(false);
     }
