@@ -28,7 +28,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
               className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
               data-testid="admin-logout-button"
             >
-              Dil
+              Logout
             </Button>
           </div>
         </div>
