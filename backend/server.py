@@ -45,6 +45,24 @@ class User(UserBase):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    approved: bool = True
+    oauth_provider: Optional[str] = None
+
+class PendingUser(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: EmailStr
+    name: str
+    picture: Optional[str] = None
+    oauth_provider: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ApproveUserRequest(BaseModel):
+    role: str
+    team_name: str
+
+class SessionExchangeRequest(BaseModel):
+    session_id: str
 
 class LoginRequest(BaseModel):
     email: EmailStr
