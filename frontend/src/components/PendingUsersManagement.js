@@ -52,8 +52,7 @@ export default function PendingUsersManagement({ token }) {
     setLoading(true);
     try {
       await axios.post(`${API}/pending-users/${selectedUser.id}/approve`, formData, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        params: { admin_token: token }
       });
       toast.success('User approved successfully!');
       setDialogOpen(false);
@@ -70,8 +69,7 @@ export default function PendingUsersManagement({ token }) {
 
     try {
       await axios.delete(`${API}/pending-users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        withCredentials: true
+        params: { admin_token: token }
       });
       toast.success('User rejected');
       fetchPendingUsers();
