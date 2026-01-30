@@ -40,8 +40,8 @@ export default function LoginPage({ onLogin }) {
   };
 
   const handleAzureLogin = () => {
-    // Azure AD will be integrated similarly
-    toast.info('Azure AD login coming soon');
+    const redirectUrl = window.location.origin + '/dashboard';
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}&provider=azure`;
   };
 
   return (
