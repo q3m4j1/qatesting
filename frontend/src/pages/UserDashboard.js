@@ -11,7 +11,7 @@ export default function UserDashboard({ user, token, onLogout }) {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="user-dashboard-title">
                 User Dashboard
               </h1>
-              <p className="text-sm text-gray-600 mt-1">Mirë se vini, {user.first_name} {user.last_name} - {user.team_name}</p>
+              <p className="text-sm text-gray-600 mt-1">Welcome, {user.first_name} {user.last_name} - {user.team_name}</p>
             </div>
             <Button 
               onClick={onLogout} 

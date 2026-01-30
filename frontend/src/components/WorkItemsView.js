@@ -212,7 +212,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="environment">Environment (opsionale)</Label>
+                    <Label htmlFor="environment">Environment (optional)</Label>
                     <Select value={formData.environment} onValueChange={(value) => setFormData({...formData, environment: value})}>
                       <SelectTrigger data-testid="work-item-environment-select">
                         <SelectValue placeholder="Select environment" />
@@ -227,7 +227,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="comments">Comments (opsionale)</Label>
+                    <Label htmlFor="comments">Comments (optional)</Label>
                     <textarea
                       id="comments"
                       value={formData.comments}

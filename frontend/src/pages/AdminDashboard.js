@@ -21,7 +21,7 @@ export default function AdminDashboard({ user, token, onLogout }) {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="admin-dashboard-title">
                 Admin Dashboard
               </h1>
-              <p className="text-sm text-gray-600 mt-1">Mirë se vini, {user.first_name} {user.last_name}</p>
+              <p className="text-sm text-gray-600 mt-1">Welcome, {user.first_name} {user.last_name}</p>
             </div>
             <Button 
               onClick={onLogout} 
