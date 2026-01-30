@@ -111,7 +111,7 @@ export default function EnvironmentsManagement({ token }) {
             </DialogTrigger>
             <DialogContent data-testid="environment-dialog">
               <DialogHeader>
-                <DialogTitle>{editingEnv ? 'Përditëso Mjedisin' : 'Add Environment të Ri'}</DialogTitle>
+                <DialogTitle>{editingEnv ? 'Update Mjedisin' : 'Add Environment të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -137,7 +137,7 @@ export default function EnvironmentsManagement({ token }) {
                   </Label>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="environment-submit-button">
-                  {loading ? 'Duke ruajtur...' : (editingEnv ? 'Përditëso' : 'Shto')}
+                  {loading ? 'Saving...' : (editingEnv ? 'Update' : 'Shto')}
                 </Button>
               </form>
             </DialogContent>
@@ -147,7 +147,7 @@ export default function EnvironmentsManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Kërko mjedise..."
+            placeholder="Search mjedise..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="environments-search"

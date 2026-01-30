@@ -142,7 +142,7 @@ export default function TeamConflictsManagement({ token }) {
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="team-config-dialog">
               <DialogHeader>
-                <DialogTitle>{editingConfig ? 'Përditëso Konfigurimin' : 'Add Configuration të Ri'}</DialogTitle>
+                <DialogTitle>{editingConfig ? 'Update Konfigurimin' : 'Add Configuration të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -179,7 +179,7 @@ export default function TeamConflictsManagement({ token }) {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="team-config-submit-button">
-                  {loading ? 'Duke ruajtur...' : (editingConfig ? 'Përditëso' : 'Shto')}
+                  {loading ? 'Saving...' : (editingConfig ? 'Update' : 'Shto')}
                 </Button>
               </form>
             </DialogContent>
@@ -189,7 +189,7 @@ export default function TeamConflictsManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Kërko ekipe..."
+            placeholder="Search ekipe..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="teams-search"

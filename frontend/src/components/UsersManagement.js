@@ -125,7 +125,7 @@ export default function UsersManagement({ token }) {
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="user-dialog">
               <DialogHeader>
-                <DialogTitle>{editingUser ? 'Përditëso Userin' : 'Add User të Ri'}</DialogTitle>
+                <DialogTitle>{editingUser ? 'Update Userin' : 'Add User të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -194,7 +194,7 @@ export default function UsersManagement({ token }) {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="user-submit-button">
-                  {loading ? 'Duke ruajtur...' : (editingUser ? 'Përditëso' : 'Shto')}
+                  {loading ? 'Saving...' : (editingUser ? 'Update' : 'Shto')}
                 </Button>
               </form>
             </DialogContent>
@@ -204,7 +204,7 @@ export default function UsersManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Kërko userë..."
+            placeholder="Search userë..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="users-search"

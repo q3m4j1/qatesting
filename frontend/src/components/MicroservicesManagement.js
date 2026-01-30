@@ -101,7 +101,7 @@ export default function MicroservicesManagement({ token }) {
             </DialogTrigger>
             <DialogContent data-testid="microservice-dialog">
               <DialogHeader>
-                <DialogTitle>{editingMs ? 'Përditëso Mikroservisin' : 'Add Microservice të Ri'}</DialogTitle>
+                <DialogTitle>{editingMs ? 'Update Mikroservisin' : 'Add Microservice të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
@@ -116,7 +116,7 @@ export default function MicroservicesManagement({ token }) {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading} data-testid="microservice-submit-button">
-                  {loading ? 'Duke ruajtur...' : (editingMs ? 'Përditëso' : 'Shto')}
+                  {loading ? 'Saving...' : (editingMs ? 'Update' : 'Shto')}
                 </Button>
               </form>
             </DialogContent>
@@ -126,7 +126,7 @@ export default function MicroservicesManagement({ token }) {
       <CardContent className="p-6">
         <div className="mb-4">
           <Input
-            placeholder="Kërko mikroservise..."
+            placeholder="Search mikroservise..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="microservices-search"

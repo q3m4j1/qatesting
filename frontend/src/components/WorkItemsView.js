@@ -181,7 +181,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="work-item-dialog">
                 <DialogHeader>
-                  <DialogTitle>{editingItem ? 'Përditëso Work Item' : 'Add Work Item të Ri'}</DialogTitle>
+                  <DialogTitle>{editingItem ? 'Update Work Item' : 'Add Work Item të Ri'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
@@ -271,7 +271,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   </div>
 
                   <Button type="submit" className="w-full" disabled={loading} data-testid="work-item-submit-button">
-                    {loading ? 'Duke ruajtur...' : (editingItem ? 'Përditëso' : 'Shto')}
+                    {loading ? 'Saving...' : (editingItem ? 'Update' : 'Shto')}
                   </Button>
                 </form>
               </DialogContent>
@@ -282,7 +282,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         {/* Search Bar */}
         <div className="mb-4">
           <Input
-            placeholder="Kërko work items..."
+            placeholder="Search work items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             data-testid="work-items-search"
