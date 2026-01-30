@@ -132,19 +132,30 @@ export default function AssignmentsView({ token }) {
               data-testid="refresh-assignments-button"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Rifresko
+              Refresh
             </Button>
             {assignments.length > 0 && (
-              <Button 
-                onClick={deleteAssignments}
-                disabled={loading}
-                variant="outline"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                data-testid="delete-assignments-button"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Fshi Shpërndarjen
-              </Button>
+              <>
+                <Button 
+                  onClick={handleShare}
+                  variant="outline"
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                  data-testid="share-assignments-button"
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Copy & Share
+                </Button>
+                <Button 
+                  onClick={deleteAssignments}
+                  disabled={loading}
+                  variant="outline"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  data-testid="delete-assignments-button"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Assignments
+                </Button>
+              </>
             )}
             <Button 
               onClick={generateAssignments}
@@ -153,7 +164,7 @@ export default function AssignmentsView({ token }) {
               data-testid="generate-assignments-button"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              {generating ? 'Duke gjeneruar...' : 'Gjenero Listen'}
+              {generating ? 'Generating...' : 'Generate List'}
             </Button>
           </div>
         </div>
