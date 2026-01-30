@@ -636,7 +636,7 @@ async def delete_work_item(item_id: str, user_token: str):
 async def generate_assignments(admin_token: str, date_filter: Optional[str] = None):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të gjenerojnë lista")
+        raise HTTPException(status_code=403, detail="Only admins can generate assignments")
     
     try:
         target_date = date_filter if date_filter else date.today().isoformat()
@@ -840,13 +840,13 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
     except Exception as e:
         logger.error(f"Error generating assignments: {e}")
         logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Gabim gjatë gjenerimit të listës: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating assignments: {str(e)}")
 
 @api_router.get("/assignments", response_model=List[AssignmentResult])
 async def get_assignments(admin_token: str, date_filter: Optional[str] = None):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të shohin listat")
+        raise HTTPException(status_code=403, detail="Only admins can view assignments")
     
     target_date = date_filter if date_filter else date.today().isoformat()
     assignments = await db.assignments.find({"date": target_date}, {"_id": 0}).to_list(1000)
@@ -856,7 +856,7 @@ async def get_assignments(admin_token: str, date_filter: Optional[str] = None):
 async def delete_assignments(admin_token: str, date_filter: Optional[str] = None):
     admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
     if not admin:
-        raise HTTPException(status_code=403, detail="Vetëm adminët mund të fshijnë listat")
+        raise HTTPException(status_code=403, detail="Only admins can delete assignments")
     
     target_date = date_filter if date_filter else date.today().isoformat()
     
@@ -869,7 +869,7 @@ async def delete_assignments(admin_token: str, date_filter: Optional[str] = None
         {"$unset": {"assigned_environment": ""}}
     )
     
-    return {"message": f"Shpërndarja u fshi me sukses. {result.deleted_count} assignment(e) u fshinë.", "deleted_count": result.deleted_count}
+    return {"message": f"Assignment deleted successfully. {result.deleted_count} assignment(e) u fshinë.", "deleted_count": result.deleted_count}
 
 # Include the router in the main app
 app.include_router(api_router)
