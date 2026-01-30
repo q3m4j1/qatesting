@@ -96,12 +96,12 @@ export default function MicroservicesManagement({ token }) {
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600" data-testid="add-microservice-button">
                 <Plus className="w-4 h-4 mr-2" />
-                Shto Mikroservis
+                Add Microservice
               </Button>
             </DialogTrigger>
             <DialogContent data-testid="microservice-dialog">
               <DialogHeader>
-                <DialogTitle>{editingMs ? 'Përditëso Mikroservisin' : 'Shto Mikroservis të Ri'}</DialogTitle>
+                <DialogTitle>{editingMs ? 'Përditëso Mikroservisin' : 'Add Microservice të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

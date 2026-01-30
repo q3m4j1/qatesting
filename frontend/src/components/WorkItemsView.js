@@ -176,12 +176,12 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600" data-testid="add-work-item-button">
                 <Plus className="w-4 h-4 mr-2" />
-                Shto Work Item
+                Add Work Item
               </Button>
             </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="work-item-dialog">
                 <DialogHeader>
-                  <DialogTitle>{editingItem ? 'Përditëso Work Item' : 'Shto Work Item të Ri'}</DialogTitle>
+                  <DialogTitle>{editingItem ? 'Përditëso Work Item' : 'Add Work Item të Ri'}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">

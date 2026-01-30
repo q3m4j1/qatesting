@@ -106,12 +106,12 @@ export default function EnvironmentsManagement({ token }) {
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600" data-testid="add-environment-button">
                 <Plus className="w-4 h-4 mr-2" />
-                Shto Mjedis
+                Add Environment
               </Button>
             </DialogTrigger>
             <DialogContent data-testid="environment-dialog">
               <DialogHeader>
-                <DialogTitle>{editingEnv ? 'Përditëso Mjedisin' : 'Shto Mjedis të Ri'}</DialogTitle>
+                <DialogTitle>{editingEnv ? 'Përditëso Mjedisin' : 'Add Environment të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

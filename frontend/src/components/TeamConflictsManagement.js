@@ -137,12 +137,12 @@ export default function TeamConflictsManagement({ token }) {
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600" data-testid="add-team-config-button">
                 <Plus className="w-4 h-4 mr-2" />
-                Shto Konfigurim
+                Add Configuration
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="team-config-dialog">
               <DialogHeader>
-                <DialogTitle>{editingConfig ? 'Përditëso Konfigurimin' : 'Shto Konfigurim të Ri'}</DialogTitle>
+                <DialogTitle>{editingConfig ? 'Përditëso Konfigurimin' : 'Add Configuration të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

@@ -120,12 +120,12 @@ export default function UsersManagement({ token }) {
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600" data-testid="add-user-button">
                 <Plus className="w-4 h-4 mr-2" />
-                Shto User
+                Add User
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-md" data-testid="user-dialog">
               <DialogHeader>
-                <DialogTitle>{editingUser ? 'Përditëso Userin' : 'Shto User të Ri'}</DialogTitle>
+                <DialogTitle>{editingUser ? 'Përditëso Userin' : 'Add User të Ri'}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
