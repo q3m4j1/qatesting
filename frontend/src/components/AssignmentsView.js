@@ -121,7 +121,7 @@ export default function AssignmentsView({ token }) {
           <div>
             <CardTitle className="text-xl font-bold" data-testid="assignments-title">Testing Session Assignments</CardTitle>
             <p className="text-sm text-gray-600 mt-1">
-              {new Date().toLocaleDateString('sq-AL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <div className="flex space-x-2">
