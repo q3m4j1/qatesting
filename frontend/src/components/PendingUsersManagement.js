@@ -103,7 +103,7 @@ export default function PendingUsersManagement({ token }) {
                 <Clock className="w-5 h-5" />
                 Pending User Approvals
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 {pendingUsers.length} user(s) awaiting approval
               </p>
             </div>
@@ -111,7 +111,7 @@ export default function PendingUsersManagement({ token }) {
         </CardHeader>
         <CardContent className="p-6">
           {pendingUsers.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <Clock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
               <p>No pending approvals</p>
             </div>
@@ -129,8 +129,8 @@ export default function PendingUsersManagement({ token }) {
                     )}
                     <div>
                       <p className="font-semibold">{user.name}</p>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Via {user.oauth_provider} • {new Date(user.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -191,7 +191,7 @@ export default function PendingUsersManagement({ token }) {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-gray-500">If team doesn't exist, add it in Teams tab first</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">If team doesn't exist, add it in Teams tab first</p>
             </div>
             <Button 
               onClick={confirmApprove} 

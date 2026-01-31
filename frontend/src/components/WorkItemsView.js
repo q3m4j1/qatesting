@@ -188,7 +188,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             <CardTitle className="text-xl font-bold" data-testid="work-items-title">
               {isAdmin ? 'All Work Items' : 'My Work Items'}
             </CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
@@ -428,7 +428,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             </tbody>
           </table>
           {workItems.length === 0 && (
-            <div className="text-center py-12 text-gray-500" data-testid="no-work-items">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400" data-testid="no-work-items">
               <p>No work items for today</p>
             </div>
           )}

@@ -128,7 +128,7 @@ export default function TeamConflictsManagement({ token }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold" data-testid="team-conflicts-title">Team Configuration for Temporary Branches</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">Select members of teams who can work together in the same environment</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Select members of teams who can work together in the same environment</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
             setDialogOpen(open);
@@ -160,7 +160,7 @@ export default function TeamConflictsManagement({ token }) {
                   <Label>Select Anëtarët (who can work together)</Label>
                   <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
                     {getTeamUsers().length === 0 ? (
-                      <p className="text-sm text-gray-500">No users from this team</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">No users from this team</p>
                     ) : (
                       getTeamUsers().map(user => (
                         <div key={user.id} className="flex items-center space-x-2">

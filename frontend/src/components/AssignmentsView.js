@@ -145,7 +145,7 @@ export default function AssignmentsView({ token }) {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold" data-testid="assignments-title">Testing Session Assignments</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
@@ -196,7 +196,7 @@ export default function AssignmentsView({ token }) {
       </CardHeader>
       <CardContent className="p-6">
         {Object.keys(groupedAssignments).length === 0 ? (
-          <div className="text-center py-12 text-gray-500" data-testid="no-assignments">
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400" data-testid="no-assignments">
             <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium">No assignments yet</p>
             <p className="text-sm mt-2">Click "Generate List" to create today's assignments</p>
