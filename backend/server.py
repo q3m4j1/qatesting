@@ -113,8 +113,8 @@ class WorkItemRecord(BaseModel):
     work_item_name: str
     microservices: Dict[str, bool]  # microservice_id: True/False
     environment: Optional[str] = None
-    can_temp_branch: bool = False
-    can_temp_with_qa: bool = False
+    can_temp_branch: bool = True  # Default to ON
+    can_temp_with_qa: bool = False  # Can temp with other QA members cross-team
     priority: int  # 1, 2, 3, 4
     comments: Optional[str] = None
     assigned_environment: Optional[str] = None  # Set after assignment generation
@@ -125,7 +125,7 @@ class WorkItemCreate(BaseModel):
     work_item_name: str
     microservices: Dict[str, bool]
     environment: Optional[str] = None
-    can_temp_branch: bool = False
+    can_temp_branch: bool = True  # Default to ON
     can_temp_with_qa: bool = False
     priority: int
     comments: Optional[str] = None
