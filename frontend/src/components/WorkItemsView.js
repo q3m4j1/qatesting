@@ -154,7 +154,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       environment: 'none',
       can_temp_branch: false,
       priority: 2,
-      comments: ''
+      comments: '',
+      assigned_user_id: ''
     });
   };
 
