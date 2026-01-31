@@ -17,11 +17,14 @@ export default function AdminDashboard({ user, token, onLogout }) {
       <div className="border-b bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="admin-dashboard-title">
-                Admin Dashboard
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">Welcome, {user.first_name} {user.last_name}</p>
+            <div className="flex items-center gap-4">
+              <img src="/hellocare-logo.png" alt="HelloCare" className="h-12" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="admin-dashboard-title">
+                  Admin Dashboard
+                </h1>
+                <p className="text-sm text-gray-600 mt-1">Welcome, {user.first_name} {user.last_name}</p>
+              </div>
             </div>
             <Button 
               onClick={onLogout} 
