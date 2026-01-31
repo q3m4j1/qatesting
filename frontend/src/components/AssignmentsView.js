@@ -224,16 +224,16 @@ export default function AssignmentsView({ token }) {
                       {envAssignments.map((assignment, idx) => (
                         <tr 
                           key={idx} 
-                          className="border-t hover:bg-gray-50 dark:bg-slate-700/50 dark:hover:bg-slate-700 transition-colors"
+                          className="border-t hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors dark:border-slate-700"
                           data-testid={`assignment-row-${assignment.user_name}-${assignment.work_item_name}`}
                         >
-                          <td className="py-3 px-4">{assignment.user_name}</td>
+                          <td className="py-3 px-4 dark:text-gray-300">{assignment.user_name}</td>
                           <td className="py-3 px-4">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-xs">
                               {assignment.team_name}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-medium">{assignment.work_item_name}</td>
+                          <td className="py-3 px-4 font-medium dark:text-gray-200">{assignment.work_item_name}</td>
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap gap-1">
                               {assignment.microservices.map(ms => (
