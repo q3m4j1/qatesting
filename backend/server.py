@@ -126,6 +126,7 @@ class WorkItemCreate(BaseModel):
     microservices: Dict[str, bool]
     environment: Optional[str] = None
     can_temp_branch: bool = False
+    can_temp_with_qa: bool = False
     priority: int
     comments: Optional[str] = None
 
