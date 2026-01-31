@@ -137,7 +137,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       environment: item.environment || 'none',
       can_temp_branch: item.can_temp_branch,
       priority: item.priority || 2,
-      comments: item.comments || ''
+      comments: item.comments || '',
+      assigned_user_id: item.assigned_user_id || ''
     });
     setDialogOpen(true);
   };
