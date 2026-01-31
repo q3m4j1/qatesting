@@ -135,6 +135,7 @@ class WorkItemUpdate(BaseModel):
     microservices: Optional[Dict[str, bool]] = None
     environment: Optional[str] = None
     can_temp_branch: Optional[bool] = None
+    can_temp_with_qa: Optional[bool] = None
     priority: Optional[int] = None
     comments: Optional[str] = None
 
