@@ -144,7 +144,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       can_temp_branch: item.can_temp_branch,
       priority: item.priority || 2,
       comments: item.comments || '',
-      assigned_user_id: item.assigned_user_id || 'admin'
+      assigned_user_id: item.assigned_user_id || 'admin',
+      can_temp_with_qa: item.can_temp_with_qa || false
     });
     setDialogOpen(true);
   };
