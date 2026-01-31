@@ -74,12 +74,14 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <BrowserRouter>
-        <AppRouter user={user} onLogin={handleLogin} onLogout={handleLogout} />
-      </BrowserRouter>
-      <Toaster />
-    </div>
+    <ThemeProvider>
+      <div className="App">
+        <BrowserRouter>
+          <AppRouter user={user} onLogin={handleLogin} onLogout={handleLogout} />
+        </BrowserRouter>
+        <Toaster />
+      </div>
+    </ThemeProvider>
   );
 }
 
