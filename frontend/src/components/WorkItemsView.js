@@ -312,7 +312,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading} data-testid="work-item-submit-button">
+                  <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="work-item-submit-button">
                     {loading ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
                   </Button>
                 </form>
@@ -333,9 +333,9 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full" data-testid="work-items-table">
+          <table className="w-full dark:bg-slate-800" data-testid="work-items-table">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b dark:border-slate-700">
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">User</th>}
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">Team</th>}
                 <th className="text-left py-3 px-4 font-semibold">Work Item</th>

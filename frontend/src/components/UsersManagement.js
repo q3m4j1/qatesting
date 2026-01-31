@@ -110,7 +110,7 @@ export default function UsersManagement({ token }) {
 
   return (
     <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="users-management-card">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 border-b">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 border-b dark:border-slate-700">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold" data-testid="users-title">User Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -193,7 +193,7 @@ export default function UsersManagement({ token }) {
                     data-testid="user-team-input"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading} data-testid="user-submit-button">
+                <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="user-submit-button">
                   {loading ? 'Saving...' : (editingUser ? 'Update' : 'Add')}
                 </Button>
               </form>
@@ -212,9 +212,9 @@ export default function UsersManagement({ token }) {
           />
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full" data-testid="users-table">
+          <table className="w-full dark:bg-slate-800" data-testid="users-table">
             <thead>
-              <tr className="border-b">
+              <tr className="border-b dark:border-slate-700">
                 <th className="text-left py-3 px-4 font-semibold">Name</th>
                 <th className="text-left py-3 px-4 font-semibold">Email</th>
                 <th className="text-left py-3 px-4 font-semibold">Role</th>

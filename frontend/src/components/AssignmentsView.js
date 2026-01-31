@@ -141,7 +141,7 @@ export default function AssignmentsView({ token }) {
 
   return (
     <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="assignments-card">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl font-bold" data-testid="assignments-title">Testing Session Assignments</CardTitle>
@@ -210,7 +210,7 @@ export default function AssignmentsView({ token }) {
                   <p className="text-sm opacity-90">{envAssignments.length} person(s)</p>
                 </div>
                 <div className="bg-white">
-                  <table className="w-full">
+                  <table className="w-full dark:bg-slate-800">
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="text-left py-3 px-4 font-semibold text-sm">User</th>

@@ -86,7 +86,7 @@ export default function MicroservicesManagement({ token }) {
 
   return (
     <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="microservices-management-card">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 border-b">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 border-b dark:border-slate-700">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold" data-testid="microservices-title">Microservice Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
@@ -115,7 +115,7 @@ export default function MicroservicesManagement({ token }) {
                     placeholder="p.sh. Front, Backend, API Gateway"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading} data-testid="microservice-submit-button">
+                <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="microservice-submit-button">
                   {loading ? 'Saving...' : (editingMs ? 'Update' : 'Add')}
                 </Button>
               </form>

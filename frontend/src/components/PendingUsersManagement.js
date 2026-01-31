@@ -96,7 +96,7 @@ export default function PendingUsersManagement({ token }) {
   return (
     <>
       <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="pending-users-card">
-        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b">
+        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b dark:border-slate-700">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl font-bold flex items-center gap-2">
@@ -195,7 +195,7 @@ export default function PendingUsersManagement({ token }) {
             </div>
             <Button 
               onClick={confirmApprove} 
-              className="w-full" 
+              className="w-full dark:bg-slate-800" 
               disabled={loading}
             >
               {loading ? 'Approving...' : 'Confirm Approval'}
