@@ -294,6 +294,18 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     </Label>
                   </div>
 
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="can_temp_with_qa"
+                      checked={formData.can_temp_with_qa}
+                      onCheckedChange={(checked) => setFormData({...formData, can_temp_with_qa: checked})}
+                      data-testid="work-item-qa-branch-switch"
+                    />
+                    <Label htmlFor="can_temp_with_qa" className="cursor-pointer">
+                      Can temp branch with other QA members (cross-team)
+                    </Label>
+                  </div>
+
                   <div className="space-y-2">
                     <Label>Microservices</Label>
                     <div className="border rounded-md p-4 max-h-64 overflow-y-auto grid grid-cols-2 gap-3">
