@@ -2,20 +2,37 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { RefreshCw, Sparkles, Trash2, Share2 } from 'lucide-react';
+import { RefreshCw, Sparkles, Trash2, Share2, AlertTriangle } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 export default function AssignmentsView({ token }) {
   const [assignments, setAssignments] = useState([]);
+  const [environments, setEnvironments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [forceAssignDialog, setForceAssignDialog] = useState(false);
+  const [selectedWaitingItem, setSelectedWaitingItem] = useState(null);
+  const [selectedEnv, setSelectedEnv] = useState('');
+  const [forceAssigning, setForceAssigning] = useState(false);
 
   useEffect(() => {
     fetchAssignments();
+    fetchEnvironments();
   }, []);
+
+  const fetchEnvironments = async () => {
+    try {
+      const response = await axios.get(`${API}/environments`);
+      setEnvironments(response.data);
+    } catch (error) {
+      console.error('Error loading environments');
+    }
+  };
 
   const fetchAssignments = async () => {
     setLoading(true);
@@ -31,6 +48,43 @@ export default function AssignmentsView({ token }) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleForceAssignClick = (assignment) => {
+    setSelectedWaitingItem(assignment);
+    setSelectedEnv('');
+    setForceAssignDialog(true);
+  };
+
+  const handleForceAssign = async () => {
+    if (!selectedEnv || !selectedWaitingItem) return;
+    
+    setForceAssigning(true);
+    try {
+      const response = await axios.post(`${API}/assignments/force-assign`, {
+        user_id: selectedWaitingItem.user_id,
+        work_item_name: selectedWaitingItem.work_item_name,
+        target_environment: selectedEnv
+      }, {
+        params: { admin_token: token }
+      });
+      
+      toast.success(`${response.data.user_name} assigned to ${selectedEnv}!`);
+      if (response.data.conflicts && response.data.conflicts.length > 0) {
+        toast.warning(`Conflicts detected: ${response.data.conflicts.join(', ')}`);
+      }
+      
+      setForceAssignDialog(false);
+      setSelectedWaitingItem(null);
+      setSelectedEnv('');
+      
+      // Refresh assignments
+      await fetchAssignments();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error force assigning');
+    } finally {
+      setForceAssigning(false);
     }
   };
 
