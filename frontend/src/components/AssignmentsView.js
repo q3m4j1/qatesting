@@ -34,6 +34,31 @@ export default function AssignmentsView({ token }) {
     }
   };
 
+  const handleRefresh = async () => {
+    // When refresh is clicked, check if there are work items that changed
+    // and auto-regenerate assignments
+    setLoading(true);
+    try {
+      // First fetch to see if assignments exist
+      const assignmentsResponse = await axios.get(`${API}/assignments`, {
+        params: { admin_token: token }
+      });
+      
+      if (assignmentsResponse.data && assignmentsResponse.data.length > 0) {
+        // Assignments exist, regenerate them
+        toast.info('Regenerating assignments with updated work items...');
+        await generateAssignments();
+      } else {
+        // No assignments, just fetch
+        await fetchAssignments();
+      }
+    } catch (error) {
+      await fetchAssignments();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const generateAssignments = async () => {
     setGenerating(true);
     try {
