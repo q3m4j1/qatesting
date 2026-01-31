@@ -46,8 +46,13 @@ export default function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-2xl border-0" data-testid="login-card">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      {/* Theme Toggle in top right */}
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+
+      <Card className="w-full max-w-md shadow-2xl border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="login-card">
         <CardHeader className="space-y-3 text-center pb-6">
           <div className="mx-auto mb-4">
             <img src="/hellocare-logo.png" alt="HelloCare" className="h-20 mx-auto" />
