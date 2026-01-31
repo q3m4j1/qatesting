@@ -140,7 +140,7 @@ export default function AssignmentsView({ token }) {
   }, {});
 
   return (
-    <Card className="shadow-lg border-0" data-testid="assignments-card">
+    <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="assignments-card">
       <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b">
         <div className="flex items-center justify-between">
           <div>

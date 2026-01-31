@@ -181,7 +181,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
   };
 
   return (
-    <Card className="shadow-lg border-0" data-testid="work-items-card">
+    <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="work-items-card">
       <CardHeader className={`border-b ${isAdmin ? 'bg-gradient-to-r from-blue-50 to-cyan-50' : 'bg-gradient-to-r from-green-50 to-teal-50'}`}>
         <div className="flex items-center justify-between">
           <div>

@@ -95,7 +95,7 @@ export default function EnvironmentsManagement({ token }) {
   };
 
   return (
-    <Card className="shadow-lg border-0" data-testid="environments-management-card">
+    <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="environments-management-card">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold" data-testid="environments-title">Environment Management</CardTitle>

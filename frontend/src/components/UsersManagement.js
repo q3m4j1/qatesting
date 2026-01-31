@@ -109,7 +109,7 @@ export default function UsersManagement({ token }) {
   };
 
   return (
-    <Card className="shadow-lg border-0" data-testid="users-management-card">
+    <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="users-management-card">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold" data-testid="users-title">User Management</CardTitle>
