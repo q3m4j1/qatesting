@@ -75,21 +75,6 @@ export default function LoginPage({ onLogin }) {
               </svg>
               Sign in with Google
             </Button>
-
-            <Button
-              onClick={handleAzureLogin}
-              variant="outline"
-              className="w-full h-12 text-base font-medium border-2 hover:bg-gray-50"
-              data-testid="azure-login-button"
-            >
-              <svg className="w-5 h-5 mr-3" viewBox="0 0 23 23">
-                <path fill="#f25022" d="M1 1h10v10H1z"/>
-                <path fill="#00a4ef" d="M12 1h10v10H12z"/>
-                <path fill="#7fba00" d="M1 12h10v10H1z"/>
-                <path fill="#ffb900" d="M12 12h10v10H12z"/>
-              </svg>
-              Sign in with Microsoft
-            </Button>
           </div>
 
           <div className="relative">
