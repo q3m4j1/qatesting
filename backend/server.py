@@ -1001,7 +1001,7 @@ async def delete_assignments(admin_token: str, date_filter: Optional[str] = None
         {"$unset": {"assigned_environment": ""}}
     )
     
-    return {"message": f"Assignment deleted successfully. {result.deleted_count} assignment(e) u fshinë.", "deleted_count": result.deleted_count}
+    return {"message": f"Assignments deleted successfully. {result.deleted_count} assignment(s) removed.", "deleted_count": result.deleted_count}
 
 # Include the router in the main app
 app.include_router(api_router)
