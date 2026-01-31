@@ -246,7 +246,7 @@ export default function AssignmentsView({ token }) {
                           <td className="py-3 px-4">
                             <div className="space-y-1">
                               {assignment.is_temp_branch && (
-                                <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">
+                                <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded-full text-xs">
                                   Temp Branch
                                 </span>
                               )}

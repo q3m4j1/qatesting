@@ -165,7 +165,7 @@ export default function EnvironmentsManagement({ token }) {
                 <div>
                   <h3 className="font-medium text-lg">{env.name}</h3>
                   {env.is_second && (
-                    <span className="inline-block mt-1 px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">
+                    <span className="inline-block mt-1 px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 text-xs rounded-full">
                       Second Env
                     </span>
                   )}

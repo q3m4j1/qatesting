@@ -365,8 +365,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         item.priority === 1 ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
-                        item.priority === 2 ? 'bg-orange-100 text-orange-700' :
-                        item.priority === 3 ? 'bg-yellow-100 text-yellow-700' :
+                        item.priority === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300' :
+                        item.priority === 3 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300' :
                         'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
                       }`}>
                         {item.priority === 1 ? 'Critical' :
