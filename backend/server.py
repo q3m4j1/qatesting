@@ -858,7 +858,6 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     )
                     assignments.append(be_assignment)
                     
-                    logger.info(f"SPLIT: {user_name} - {work_item_name} -> FE:{sec_env['name']}, BE:{parent_env_name}")
                     assigned = True
                     break
             
