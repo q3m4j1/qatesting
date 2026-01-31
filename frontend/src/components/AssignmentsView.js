@@ -204,20 +204,20 @@ export default function AssignmentsView({ token }) {
         ) : (
           <div className="space-y-6">
             {Object.entries(groupedAssignments).map(([env, envAssignments]) => (
-              <div key={env} className="border rounded-lg overflow-hidden" data-testid={`environment-group-${env}`}>
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3">
+              <div key={env} className="border rounded-lg overflow-hidden dark:border-slate-700" data-testid={`environment-group-${env}`}>
+                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3 dark:from-indigo-600 dark:to-purple-600">
                   <h3 className="font-bold text-lg">{env}</h3>
                   <p className="text-sm opacity-90">{envAssignments.length} person(s)</p>
                 </div>
                 <div className="bg-white dark:bg-slate-800">
                   <table className="w-full dark:bg-slate-800">
-                    <thead className="bg-gray-50">
+                    <thead className="bg-gray-50 dark:bg-slate-700/50">
                       <tr>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">User</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">Team</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">Work Item</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">Microservices</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">User</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Team</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Work Item</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Microservices</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Status</th>
                       </tr>
                     </thead>
                     <tbody>
