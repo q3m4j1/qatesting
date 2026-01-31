@@ -163,7 +163,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       can_temp_branch: false,
       priority: 2,
       comments: '',
-      assigned_user_id: 'admin'
+      assigned_user_id: 'admin',
+      can_temp_with_qa: false
     });
   };
 
