@@ -110,7 +110,7 @@ export default function UsersManagement({ token }) {
 
   return (
     <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="users-management-card">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-slate-700 dark:to-slate-600 border-b">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-bold" data-testid="users-title">User Management</CardTitle>
           <Dialog open={dialogOpen} onOpenChange={(open) => {
