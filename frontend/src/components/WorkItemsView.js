@@ -93,6 +93,11 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     setLoading(true);
 
     try {
+      const params = { user_token: token };
+      if (isAdmin && formData.assigned_user_id) {
+        params.assigned_user_id = formData.assigned_user_id;
+      }
+
       if (editingItem) {
         await axios.put(`${API}/work-items/${editingItem.id}`, formData, {
           params: { user_token: token }
@@ -100,7 +105,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
         toast.success('Work item updated successfully!');
       } else {
         await axios.post(`${API}/work-items`, formData, {
-          params: { user_token: token }
+          params
         });
         toast.success('Work item created successfully!');
       }
