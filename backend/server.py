@@ -149,6 +149,11 @@ class AssignmentResult(BaseModel):
     is_temp_branch: bool
     conflicts: List[str]
 
+class ForceAssignRequest(BaseModel):
+    user_id: str
+    work_item_name: str
+    target_environment: str
+
 # Helper functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
