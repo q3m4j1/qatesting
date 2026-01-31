@@ -14,27 +14,30 @@ export default function AdminDashboard({ user, token, onLogout }) {
   const [activeTab, setActiveTab] = useState('users');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50">
-      <div className="border-b bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-sm sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <img src="/hellocare-logo.png" alt="HelloCare" className="h-12" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-800" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="admin-dashboard-title">
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }} data-testid="admin-dashboard-title">
                   Admin Dashboard
                 </h1>
-                <p className="text-sm text-gray-600 mt-1">Welcome, {user.first_name} {user.last_name}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Welcome, {user.first_name} {user.last_name}</p>
               </div>
             </div>
-            <Button 
-              onClick={onLogout} 
-              variant="outline" 
-              className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors"
-              data-testid="admin-logout-button"
-            >
-              Logout
-            </Button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <Button 
+                onClick={onLogout} 
+                variant="outline" 
+                className="hover:bg-red-50 hover:text-red-600 hover:border-red-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 transition-colors"
+                data-testid="admin-logout-button"
+              >
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
