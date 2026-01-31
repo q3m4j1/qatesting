@@ -122,7 +122,7 @@ export default function EnvironmentsManagement({ token }) {
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     required
                     data-testid="environment-name-input"
-                    placeholder="p.sh. QA, Nightly, UAT"
+                    placeholder="e.g. QA, Nightly, UAT"
                   />
                 </div>
                 <div className="flex items-center space-x-2">

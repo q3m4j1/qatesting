@@ -218,7 +218,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       onChange={(e) => setFormData({...formData, work_item_name: e.target.value})}
                       required
                       data-testid="work-item-name-input"
-                      placeholder="p.sh. Feature-123, Bug-456"
+                      placeholder="e.g. Feature-123, Bug-456"
                     />
                   </div>
 

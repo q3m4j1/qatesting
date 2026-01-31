@@ -153,7 +153,7 @@ export default function TeamConflictsManagement({ token }) {
                     onChange={(e) => setFormData({...formData, team_name: e.target.value})}
                     required
                     data-testid="team-name-input"
-                    placeholder="p.sh. Team A, Development Team"
+                    placeholder="e.g. Team A, Development Team"
                   />
                 </div>
                 <div className="space-y-2">

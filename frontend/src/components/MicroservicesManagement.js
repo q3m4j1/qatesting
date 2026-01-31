@@ -112,7 +112,7 @@ export default function MicroservicesManagement({ token }) {
                     onChange={(e) => setName(e.target.value)}
                     required
                     data-testid="microservice-name-input"
-                    placeholder="p.sh. Front, Backend, API Gateway"
+                    placeholder="e.g. Front, Backend, API Gateway"
                   />
                 </div>
                 <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="microservice-submit-button">
