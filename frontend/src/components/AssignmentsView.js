@@ -151,13 +151,13 @@ export default function AssignmentsView({ token }) {
           </div>
           <div className="flex space-x-2">
             <Button 
-              onClick={fetchAssignments} 
+              onClick={handleRefresh} 
               variant="outline"
               disabled={loading}
               data-testid="refresh-assignments-button"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
+              Refresh & Auto-Update
             </Button>
             {assignments.length > 0 && (
               <>
