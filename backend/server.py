@@ -810,7 +810,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                             break
             
             # STRATEGY 2: Optimized -second environment usage
-            # If work item has both Front and BE microservices, try to split
+            # If work item has both Front and BE microservices, try to split into TWO assignments
             if not assigned and has_mixed and second_envs:
                 for sec_env in second_envs:
                     sec_env_id = sec_env['id']
@@ -823,29 +823,84 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     sec_existing = env_assignments[sec_env_id]
                     parent_existing = env_assignments[parent_env_id]
                     
-                    # Check Front conflicts in -second
+                    # Check Front conflicts in -second (only check for Front microservice)
                     front_conflict_in_sec = False
+                    can_temp_in_sec = True
                     for existing in sec_existing:
                         existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
                         if front_ms_id in existing_ms:
-                            front_conflict_in_sec = True
-                            break
+                            # There's a Front conflict
+                            if existing['team_name'] != team_name:
+                                # Different team - check QA temp
+                                if not (item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False)):
+                                    front_conflict_in_sec = True
+                                    break
+                            else:
+                                # Same team - check temp branch
+                                if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
+                                    can_temp_in_sec = False
                     
                     # Check BE conflicts in parent
                     be_conflict_in_parent = False
+                    can_temp_in_parent = True
+                    be_conflicts_list = []
                     for existing in parent_existing:
                         existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
                         common_be = set(backend_ms_ids) & set(existing_ms)
                         if common_be:
-                            be_conflict_in_parent = True
-                            break
+                            be_conflicts_list.extend([ms_id_to_name.get(ms_id, ms_id) for ms_id in common_be])
+                            if existing['team_name'] != team_name:
+                                # Different team - check QA temp
+                                if not (item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False)):
+                                    be_conflict_in_parent = True
+                                    break
+                            else:
+                                # Same team - check temp branch
+                                if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
+                                    can_temp_in_parent = False
                     
-                    # If Front can go in -second without conflict, and BE can go in parent
+                    # If Front can go in -second and BE can go in parent (with or without temp branch)
                     if not front_conflict_in_sec and not be_conflict_in_parent:
-                        # Create a split: assign Front to -second, BE to parent
-                        env_assignments[sec_env_id].append(item)
-                        # Note: We're assigning the whole item but indicating split
-                        assigned_env = f"{sec_env['name']} (FE) + {[e['name'] for e in regular_envs if e['id'] == parent_env_id][0]} (BE)"
+                        parent_env_name = [e['name'] for e in regular_envs if e['id'] == parent_env_id][0]
+                        backend_ms_names = [ms_id_to_name.get(ms_id, ms_id) for ms_id in backend_ms_ids]
+                        
+                        # Create FE-only item for tracking in -second
+                        fe_item = item.copy()
+                        fe_item['microservices'] = {front_ms_id: True} if front_ms_id else {'Front': True}
+                        env_assignments[sec_env_id].append(fe_item)
+                        
+                        # Create BE-only item for tracking in parent
+                        be_item = item.copy()
+                        be_item['microservices'] = {ms_id: True for ms_id in backend_ms_ids}
+                        env_assignments[parent_env_id].append(be_item)
+                        
+                        # Create TWO assignment results - one for FE, one for BE
+                        # FE Assignment (to -second)
+                        fe_assignment = AssignmentResult(
+                            user_id=user_id,
+                            user_name=user_name,
+                            team_name=team_name,
+                            work_item_name=f"{work_item_name} (FE)",
+                            assigned_environment=sec_env['name'],
+                            microservices=['Front'],
+                            is_temp_branch=not can_temp_in_sec,
+                            conflicts=['Front - Split from BE'] if not can_temp_in_sec else []
+                        )
+                        assignments.append(fe_assignment)
+                        
+                        # BE Assignment (to parent)
+                        be_assignment = AssignmentResult(
+                            user_id=user_id,
+                            user_name=user_name,
+                            team_name=team_name,
+                            work_item_name=f"{work_item_name} (BE)",
+                            assigned_environment=parent_env_name,
+                            microservices=backend_ms_names,
+                            is_temp_branch=len(be_conflicts_list) > 0 and can_temp_in_parent,
+                            conflicts=list(set(be_conflicts_list)) if be_conflicts_list else []
+                        )
+                        assignments.append(be_assignment)
+                        
                         assigned = True
                         break
             
