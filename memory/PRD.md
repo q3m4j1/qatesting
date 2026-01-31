@@ -85,7 +85,7 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - [x] Search bars on all tables
 - [x] Share/Copy assignments
 - [x] Full English UI translation
-- [x] HelloCare logo integration
+- [x] **Force Assign feature**: Admin can manually assign waiting items to any environment with confirmation dialog
 
 ### Test Coverage
 - Backend: 14/14 API tests passing (100%)
