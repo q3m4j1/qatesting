@@ -158,7 +158,7 @@ export default function EnvironmentsManagement({ token }) {
           {environments.filter(env => env.name.toLowerCase().includes(searchQuery.toLowerCase())).map((env) => (
             <div 
               key={env.id} 
-              className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
+              className="p-4 border rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-shadow"
               data-testid={`environment-item-${env.name}`}
             >
               <div className="flex items-start justify-between">

@@ -224,7 +224,7 @@ export default function AssignmentsView({ token }) {
                       {envAssignments.map((assignment, idx) => (
                         <tr 
                           key={idx} 
-                          className="border-t hover:bg-gray-50 transition-colors"
+                          className="border-t hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                           data-testid={`assignment-row-${assignment.user_name}-${assignment.work_item_name}`}
                         >
                           <td className="py-3 px-4">{assignment.user_name}</td>

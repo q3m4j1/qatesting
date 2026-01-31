@@ -230,7 +230,7 @@ export default function UsersManagement({ token }) {
                        user.email.toLowerCase().includes(query) ||
                        user.team_name.toLowerCase().includes(query);
               }).map((user) => (
-                <tr key={user.id} className="border-b hover:bg-gray-50 transition-colors" data-testid={`user-row-${user.email}`}>
+                <tr key={user.id} className="border-b hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-testid={`user-row-${user.email}`}>
                   <td className="py-3 px-4">{user.first_name} {user.last_name}</td>
                   <td className="py-3 px-4">{user.email}</td>
                   <td className="py-3 px-4">

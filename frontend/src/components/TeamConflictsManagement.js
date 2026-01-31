@@ -202,7 +202,7 @@ export default function TeamConflictsManagement({ token }) {
             return (
               <div 
                 key={config.id} 
-                className="p-4 border rounded-lg bg-white hover:shadow-md transition-shadow"
+                className="p-4 border rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-shadow"
                 data-testid={`team-config-item-${config.team_name}`}
               >
                 <div className="flex items-start justify-between">
