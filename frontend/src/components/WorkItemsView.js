@@ -17,6 +17,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
   const [workItems, setWorkItems] = useState([]);
   const [microservices, setMicroservices] = useState([]);
   const [environments, setEnvironments] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
@@ -27,7 +28,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     environment: 'none',
     can_temp_branch: false,
     priority: 2,
-    comments: ''
+    comments: '',
+    assigned_user_id: '' // For admin to assign to specific user
   });
 
   useEffect(() => {
