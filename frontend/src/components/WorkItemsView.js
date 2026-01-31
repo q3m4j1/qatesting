@@ -36,7 +36,21 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     fetchWorkItems();
     fetchMicroservices();
     fetchEnvironments();
+    if (isAdmin) {
+      fetchUsers();
+    }
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await axios.get(`${API}/users`, {
+        params: { admin_token: token }
+      });
+      setUsers(response.data);
+    } catch (error) {
+      toast.error('Error loading users');
+    }
+  };
 
   const fetchWorkItems = async () => {
     try {
