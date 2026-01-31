@@ -87,9 +87,12 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - [x] Full English UI translation
 - [x] **Force Assign feature**: Admin can manually assign waiting items to any environment with confirmation dialog
 
+- [x] HelloCare logo integration
+
 ### Test Coverage
 - Backend: 14/14 API tests passing (100%)
 - Frontend: All UI flows verified
+- Force Assign API: Tested and working
 - Test file: `/app/backend/tests/test_api.py`
 
 ## Prioritized Backlog
