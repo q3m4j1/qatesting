@@ -212,6 +212,25 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     />
                   </div>
 
+                  {isAdmin && (
+                    <div className="space-y-2">
+                      <Label htmlFor="assigned_user">Assign to User (optional)</Label>
+                      <Select value={formData.assigned_user_id} onValueChange={(value) => setFormData({...formData, assigned_user_id: value})}>
+                        <SelectTrigger data-testid="work-item-user-select">
+                          <SelectValue placeholder="Select user (leave blank for admin)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Admin (Self)</SelectItem>
+                          {users.filter(u => u.role !== 'Admin').map(u => (
+                            <SelectItem key={u.id} value={u.id}>
+                              {u.first_name} {u.last_name} ({u.team_name})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority (1=Highest, 4=Lowest) *</Label>
                     <Select value={formData.priority.toString()} onValueChange={(value) => setFormData({...formData, priority: parseInt(value)})}>
