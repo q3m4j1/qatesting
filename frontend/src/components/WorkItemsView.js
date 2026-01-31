@@ -29,7 +29,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     can_temp_branch: false,
     priority: 2,
     comments: '',
-    assigned_user_id: '' // For admin to assign to specific user
+    assigned_user_id: 'admin' // For admin to assign to specific user
   });
 
   useEffect(() => {
