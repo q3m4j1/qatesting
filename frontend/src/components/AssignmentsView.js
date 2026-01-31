@@ -257,9 +257,12 @@ export default function AssignmentsView({ token }) {
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(groupedAssignments).map(([env, envAssignments]) => (
-              <div key={env} className="border rounded-lg overflow-hidden dark:border-slate-700" data-testid={`environment-group-${env}`}>
-                <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-3 dark:from-indigo-600 dark:to-purple-600">
+            {Object.entries(groupedAssignments).map(([env, envAssignments]) => {
+              const isWaitingList = env === 'WAITING - In Queue';
+              
+              return (
+              <div key={env} className={`border rounded-lg overflow-hidden dark:border-slate-700 ${isWaitingList ? 'border-red-300 dark:border-red-700' : ''}`} data-testid={`environment-group-${env}`}>
+                <div className={`text-white px-4 py-3 ${isWaitingList ? 'bg-gradient-to-r from-red-500 to-orange-500 dark:from-red-600 dark:to-orange-600' : 'bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-600 dark:to-purple-600'}`}>
                   <h3 className="font-bold text-lg">{env}</h3>
                   <p className="text-sm opacity-90">{envAssignments.length} person(s)</p>
                 </div>
@@ -271,7 +274,7 @@ export default function AssignmentsView({ token }) {
                         <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Team</th>
                         <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Work Item</th>
                         <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Microservices</th>
-                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">Status</th>
+                        <th className="text-left py-3 px-4 font-semibold text-sm dark:text-gray-300">{isWaitingList ? 'Force Assign' : 'Status'}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -298,18 +301,31 @@ export default function AssignmentsView({ token }) {
                             </div>
                           </td>
                           <td className="py-3 px-4">
-                            <div className="space-y-1">
-                              {assignment.is_temp_branch && (
-                                <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded-full text-xs">
-                                  Temp Branch
-                                </span>
-                              )}
-                              {assignment.conflicts && assignment.conflicts.length > 0 && (
-                                <div className="text-xs text-red-600">
-                                  Conflicts: {assignment.conflicts.join(', ')}
-                                </div>
-                              )}
-                            </div>
+                            {isWaitingList ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 border-orange-300"
+                                onClick={() => handleForceAssignClick(assignment)}
+                                data-testid={`force-assign-${assignment.work_item_name}`}
+                              >
+                                <AlertTriangle className="w-4 h-4 mr-1" />
+                                Force Assign
+                              </Button>
+                            ) : (
+                              <div className="space-y-1">
+                                {assignment.is_temp_branch && (
+                                  <span className="inline-block px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded-full text-xs">
+                                    Temp Branch
+                                  </span>
+                                )}
+                                {assignment.conflicts && assignment.conflicts.length > 0 && (
+                                  <div className="text-xs text-red-600">
+                                    Conflicts: {assignment.conflicts.join(', ')}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -317,9 +333,77 @@ export default function AssignmentsView({ token }) {
                   </table>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
+
+        {/* Force Assign Confirmation Dialog */}
+        <Dialog open={forceAssignDialog} onOpenChange={setForceAssignDialog}>
+          <DialogContent className="max-w-md" data-testid="force-assign-dialog">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-orange-600">
+                <AlertTriangle className="w-5 h-5" />
+                Force Assign to Environment
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedWaitingItem && (
+              <div className="space-y-4">
+                <div className="bg-gray-50 dark:bg-slate-700 p-3 rounded-lg">
+                  <p className="text-sm font-medium">{selectedWaitingItem.user_name}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{selectedWaitingItem.work_item_name}</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {selectedWaitingItem.microservices.map(ms => (
+                      <span key={ms} className="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 rounded text-xs">
+                        {ms}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Select Environment:</label>
+                  <Select value={selectedEnv} onValueChange={setSelectedEnv}>
+                    <SelectTrigger data-testid="force-assign-env-select">
+                      <SelectValue placeholder="Choose an environment..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {environments.map(env => (
+                        <SelectItem key={env.id} value={env.name}>
+                          {env.name} {env.is_second ? '(FE only)' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-3 rounded-lg">
+                  <p className="text-sm text-orange-700 dark:text-orange-300">
+                    <strong>Warning:</strong> Force assigning may cause conflicts with other users in the same environment. Are you sure you want to proceed?
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setForceAssignDialog(false)}
+                disabled={forceAssigning}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleForceAssign}
+                disabled={!selectedEnv || forceAssigning}
+                className="bg-orange-500 hover:bg-orange-600"
+                data-testid="confirm-force-assign-button"
+              >
+                {forceAssigning ? 'Assigning...' : 'Yes, Force Assign'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
