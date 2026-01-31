@@ -781,21 +781,29 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     parent_existing = env_assignments[parent_env_id]
                     
                     # Check Front conflicts in -second (only check for Front microservice)
+                    # For -second environments, we want STRICT checking - no Front conflicts allowed
+                    # unless they can do temp branching
                     front_conflict_in_sec = False
                     can_temp_in_sec = True
+                    front_temp_conflicts = []
+                    
                     for existing in sec_existing:
                         existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
                         if front_ms_id in existing_ms:
-                            # There's a Front conflict
+                            # There's a Front conflict in -second
+                            front_temp_conflicts.append(existing['user_name'])
                             if existing['team_name'] != team_name:
                                 # Different team - check QA temp
                                 if not (item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False)):
                                     front_conflict_in_sec = True
                                     break
+                                # Different team but both have can_temp_with_qa - allow with temp
                             else:
                                 # Same team - check temp branch
                                 if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
-                                    can_temp_in_sec = False
+                                    front_conflict_in_sec = True
+                                    break
+                                # Same team and both can temp - allow with temp
                     
                     if front_conflict_in_sec:
                         continue
@@ -826,6 +834,9 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     parent_env_name = [e['name'] for e in regular_envs if e['id'] == parent_env_id][0]
                     backend_ms_names = [ms_id_to_name.get(ms_id, ms_id) for ms_id in backend_ms_ids]
                     
+                    # Determine if FE assignment needs temp branch flag
+                    fe_needs_temp = len(front_temp_conflicts) > 0
+                    
                     # Create FE-only item for tracking in -second
                     fe_item = item.copy()
                     fe_item['microservices'] = {front_ms_id: True} if front_ms_id else {'Front': True}
@@ -845,8 +856,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         work_item_name=f"{work_item_name} (FE)",
                         assigned_environment=sec_env['name'],
                         microservices=['Front'],
-                        is_temp_branch=not can_temp_in_sec,
-                        conflicts=['Front - Split from BE'] if not can_temp_in_sec else []
+                        is_temp_branch=fe_needs_temp,
+                        conflicts=[f"Front conflict with {', '.join(front_temp_conflicts)}"] if fe_needs_temp else []
                     )
                     assignments.append(fe_assignment)
                     
