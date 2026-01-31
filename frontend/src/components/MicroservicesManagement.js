@@ -137,7 +137,7 @@ export default function MicroservicesManagement({ token }) {
           {microservices.filter(ms => ms.name.toLowerCase().includes(searchQuery.toLowerCase())).map((ms) => (
             <div 
               key={ms.id} 
-              className="p-4 border rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-shadow flex items-center justify-between"
+              className="p-4 border rounded dark:border-slate-600 dark:bg-slate-700/30-lg bg-white dark:bg-slate-800 dark:bg-slate-800 hover:shadow-md transition-shadow flex items-center justify-between"
               data-testid={`microservice-item-${ms.name}`}
             >
               <span className="font-medium">{ms.name}</span>

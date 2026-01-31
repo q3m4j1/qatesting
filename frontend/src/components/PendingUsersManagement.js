@@ -120,7 +120,7 @@ export default function PendingUsersManagement({ token }) {
               {pendingUsers.map((user) => (
                 <div 
                   key={user.id} 
-                  className="p-4 border rounded-lg bg-white dark:bg-slate-800 hover:shadow-md transition-shadow flex items-center justify-between"
+                  className="p-4 border rounded dark:border-slate-600 dark:bg-slate-700/30-lg bg-white dark:bg-slate-800 dark:bg-slate-800 hover:shadow-md transition-shadow flex items-center justify-between"
                   data-testid={`pending-user-${user.email}`}
                 >
                   <div className="flex items-center gap-4">
