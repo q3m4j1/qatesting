@@ -755,8 +755,6 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             only_front = has_front and len(selected_ms_ids) == 1
             has_mixed = has_front and len(backend_ms_ids) > 0
             
-            logger.info(f"Processing: {user_name} - {work_item_name} | has_front={has_front}, has_mixed={has_mixed}, only_front={only_front}, backend_ms_count={len(backend_ms_ids)}")
-            
             assigned = False
             assigned_env = None
             is_temp_branch = False
