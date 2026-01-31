@@ -26,10 +26,11 @@ export default function WorkItemsView({ token, isAdmin, user }) {
     work_item_name: '',
     microservices: {},
     environment: 'none',
-    can_temp_branch: false,
+    can_temp_branch: true,  // Default to ON
     priority: 2,
     comments: '',
-    assigned_user_id: 'admin' // For admin to assign to specific user
+    assigned_user_id: 'admin', // For admin to assign to specific user
+    can_temp_with_qa: false  // New feature
   });
 
   useEffect(() => {
