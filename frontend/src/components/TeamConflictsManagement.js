@@ -210,7 +210,7 @@ export default function TeamConflictsManagement({ token }) {
                     <h3 className="font-semibold text-lg mb-2">{config.team_name}</h3>
                     <div className="flex flex-wrap gap-2">
                       {teamUsers.map(user => (
-                        <span key={user.id} className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                        <span key={user.id} className="px-3 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded-full text-sm">
                           {user.first_name} {user.last_name}
                         </span>
                       ))}

@@ -364,10 +364,10 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     <td className="py-3 px-4 font-medium">{item.work_item_name}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        item.priority === 1 ? 'bg-red-100 text-red-700' :
+                        item.priority === 1 ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' :
                         item.priority === 2 ? 'bg-orange-100 text-orange-700' :
                         item.priority === 3 ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-green-100 text-green-700'
+                        'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
                       }`}>
                         {item.priority === 1 ? 'Critical' :
                          item.priority === 2 ? 'High' :
@@ -378,8 +378,8 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       {item.assigned_environment ? (
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           item.assigned_environment === 'WAITING - Në radhë' 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-green-100 text-green-700'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300' 
+                            : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
                         }`}>
                           {item.assigned_environment}
                         </span>
@@ -390,7 +390,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     <td className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {selectedMs.map(ms => (
-                          <span key={ms} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                          <span key={ms} className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-xs">
                             {ms}
                           </span>
                         ))}
@@ -398,7 +398,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     </td>
                     <td className="py-3 px-4">
                       {item.can_temp_branch ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Po</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 rounded-full text-xs">Po</span>
                       ) : (
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">Jo</span>
                       )}

@@ -229,7 +229,7 @@ export default function AssignmentsView({ token }) {
                         >
                           <td className="py-3 px-4">{assignment.user_name}</td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 rounded text-xs">
                               {assignment.team_name}
                             </span>
                           </td>
@@ -237,7 +237,7 @@ export default function AssignmentsView({ token }) {
                           <td className="py-3 px-4">
                             <div className="flex flex-wrap gap-1">
                               {assignment.microservices.map(ms => (
-                                <span key={ms} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                <span key={ms} className="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 rounded text-xs">
                                   {ms}
                                 </span>
                               ))}
