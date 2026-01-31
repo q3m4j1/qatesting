@@ -358,7 +358,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                   .map(([msId, _]) => getMicroserviceName(msId));
                 
                 return (
-                  <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors" data-testid={`work-item-row-${item.work_item_name}`}>
+                  <tr key={item.id} className="border-b hover:bg-gray-50 dark:bg-slate-700/50 dark:hover:bg-slate-700 transition-colors" data-testid={`work-item-row-${item.work_item_name}`}>
                     {isAdmin && <td className="py-3 px-4">{item.user_name}</td>}
                     {isAdmin && <td className="py-3 px-4">{item.team_name}</td>}
                     <td className="py-3 px-4 font-medium">{item.work_item_name}</td>

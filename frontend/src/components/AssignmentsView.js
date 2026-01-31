@@ -209,7 +209,7 @@ export default function AssignmentsView({ token }) {
                   <h3 className="font-bold text-lg">{env}</h3>
                   <p className="text-sm opacity-90">{envAssignments.length} person(s)</p>
                 </div>
-                <div className="bg-white">
+                <div className="bg-white dark:bg-slate-800">
                   <table className="w-full dark:bg-slate-800">
                     <thead className="bg-gray-50">
                       <tr>
@@ -224,7 +224,7 @@ export default function AssignmentsView({ token }) {
                       {envAssignments.map((assignment, idx) => (
                         <tr 
                           key={idx} 
-                          className="border-t hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                          className="border-t hover:bg-gray-50 dark:bg-slate-700/50 dark:hover:bg-slate-700 transition-colors"
                           data-testid={`assignment-row-${assignment.user_name}-${assignment.work_item_name}`}
                         >
                           <td className="py-3 px-4">{assignment.user_name}</td>
