@@ -57,10 +57,10 @@ export default function LoginPage({ onLogin }) {
           <div className="mx-auto mb-4">
             <img src="/hellocare-logo.png" alt="HelloCare" className="h-20 mx-auto" />
           </div>
-          <CardTitle className="text-3xl font-bold text-gray-800" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+          <CardTitle className="text-3xl font-bold text-gray-800 dark:text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             Testing Manager
           </CardTitle>
-          <CardDescription className="text-base">
+          <CardDescription className="text-base dark:text-gray-300">
             Welcome! Please sign in to continue.
           </CardDescription>
         </CardHeader>
