@@ -252,7 +252,7 @@ export default function AssignmentsView({ token }) {
                               )}
                               {assignment.conflicts && assignment.conflicts.length > 0 && (
                                 <div className="text-xs text-red-600">
-                                  Konflikte: {assignment.conflicts.join(', ')}
+                                  Conflicts: {assignment.conflicts.join(', ')}
                                 </div>
                               )}
                             </div>
