@@ -1072,6 +1072,99 @@ async def delete_assignments(admin_token: str, date_filter: Optional[str] = None
     
     return {"message": f"Assignments deleted successfully. {result.deleted_count} assignment(s) removed.", "deleted_count": result.deleted_count}
 
+@api_router.post("/assignments/force-assign")
+async def force_assign_to_environment(request: ForceAssignRequest, admin_token: str, date_filter: Optional[str] = None):
+    """Force assign a waiting work item to a specific environment"""
+    admin = await db.users.find_one({"id": admin_token, "role": "Admin"}, {"_id": 0})
+    if not admin:
+        raise HTTPException(status_code=403, detail="Only admins can force assign")
+    
+    target_date = date_filter if date_filter else date.today().isoformat()
+    
+    try:
+        # Find the assignment in waiting list
+        waiting_assignment = await db.assignments.find_one({
+            "user_id": request.user_id,
+            "work_item_name": request.work_item_name,
+            "date": target_date,
+            "assigned_environment": "WAITING - In Queue"
+        }, {"_id": 0})
+        
+        if not waiting_assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found in waiting list")
+        
+        # Get the target environment to verify it exists
+        env = await db.environments.find_one({"name": request.target_environment}, {"_id": 0})
+        if not env:
+            raise HTTPException(status_code=404, detail="Environment not found")
+        
+        # Get all microservices for ID to name mapping
+        all_ms = await db.microservices.find({}, {"_id": 0}).to_list(1000)
+        ms_id_to_name = {ms['id']: ms['name'] for ms in all_ms}
+        
+        # Find existing assignments in the target environment
+        existing_in_env = await db.assignments.find({
+            "date": target_date,
+            "assigned_environment": request.target_environment
+        }, {"_id": 0}).to_list(1000)
+        
+        # Check for conflicts
+        waiting_ms = waiting_assignment.get('microservices', [])
+        conflicts = []
+        
+        for existing in existing_in_env:
+            existing_ms = existing.get('microservices', [])
+            common_ms = set(waiting_ms) & set(existing_ms)
+            if common_ms:
+                conflicts.extend(list(common_ms))
+                conflicts.append(f"with {existing['user_name']}")
+        
+        # Update the assignment - force it to the new environment
+        await db.assignments.update_one(
+            {
+                "user_id": request.user_id,
+                "work_item_name": request.work_item_name,
+                "date": target_date,
+                "assigned_environment": "WAITING - In Queue"
+            },
+            {
+                "$set": {
+                    "assigned_environment": request.target_environment,
+                    "is_temp_branch": len(conflicts) > 0,
+                    "conflicts": list(set(conflicts)) if conflicts else ["Force assigned by Admin"]
+                }
+            }
+        )
+        
+        # Update the work item as well
+        # Handle both full work item name and split names (with FE/BE suffix)
+        base_work_item_name = request.work_item_name.replace(" (FE)", "").replace(" (BE)", "")
+        await db.work_items.update_many(
+            {
+                "user_id": request.user_id,
+                "date": target_date,
+                "$or": [
+                    {"work_item_name": base_work_item_name},
+                    {"work_item_name": request.work_item_name}
+                ]
+            },
+            {"$set": {"assigned_environment": request.target_environment}}
+        )
+        
+        return {
+            "message": f"Successfully force assigned to {request.target_environment}",
+            "conflicts": list(set(conflicts)) if conflicts else [],
+            "user_name": waiting_assignment['user_name'],
+            "work_item_name": request.work_item_name
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error force assigning: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Error force assigning: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
