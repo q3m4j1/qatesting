@@ -222,7 +222,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                           <SelectValue placeholder="Select user (leave blank for admin)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Admin (Self)</SelectItem>
+                          <SelectItem value="admin">Admin (Self)</SelectItem>
                           {users.filter(u => u.role !== 'Admin').map(u => (
                             <SelectItem key={u.id} value={u.id}>
                               {u.first_name} {u.last_name} ({u.team_name})
