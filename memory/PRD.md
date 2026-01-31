@@ -127,4 +127,5 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - `GET /api/work-items`, `POST /api/work-items` - Work item management
 - `POST /api/generate-assignments` - Generate daily assignments
 - `GET /api/assignments` - Get assignments
+- `POST /api/assignments/force-assign` - Force assign waiting item to environment
 - `DELETE /api/assignments` - Delete assignments
