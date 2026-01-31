@@ -114,6 +114,7 @@ class WorkItemRecord(BaseModel):
     microservices: Dict[str, bool]  # microservice_id: True/False
     environment: Optional[str] = None
     can_temp_branch: bool = False
+    can_temp_with_qa: bool = False
     priority: int  # 1, 2, 3, 4
     comments: Optional[str] = None
     assigned_environment: Optional[str] = None  # Set after assignment generation
