@@ -70,11 +70,14 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 ### Completed Features
 - [x] Full CRUD for Users, Teams, Environments, Microservices
 - [x] Work item creation with all options
-- [x] Advanced assignment algorithm with 4 strategies
+- [x] **Advanced assignment algorithm with optimized -second logic:**
+  - **STRATEGY 1 (Split)**: For mixed FE+BE items, splits into separate assignments (FE → `-second` env, BE → parent env)
+  - **STRATEGY 2 (Regular)**: Assigns full items to regular environments with conflict checking
+  - **STRATEGY 3 (FE-only)**: Routes frontend-only items to `-second` environments
+  - **STRATEGY 4 (Fallback)**: Uses any remaining `-second` environment
 - [x] Cross-team temp branching (`can_temp_with_qa`)
 - [x] Same-team temp branching (`can_temp_branch`, default ON)
-- [x] Optimized -second environment usage (FE/BE split)
-- [x] Priority-based sorting
+- [x] Priority-based sorting (1=Critical to 4=Low)
 - [x] Waiting list functionality
 - [x] Google OAuth integration
 - [x] Pending user approval system
