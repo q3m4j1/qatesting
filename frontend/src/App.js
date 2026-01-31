@@ -7,6 +7,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AuthCallback from "./pages/AuthCallback";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function AppRouter({ user, onLogin, onLogout }) {
   const location = useLocation();
