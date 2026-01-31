@@ -542,26 +542,47 @@ async def delete_team_conflict(config_id: str, admin_token: str):
 
 # Work item routes
 @api_router.post("/work-items", response_model=WorkItemRecord)
-async def create_work_item(item: WorkItemCreate, user_token: str):
+async def create_work_item(item: WorkItemCreate, user_token: str, assigned_user_id: Optional[str] = None):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user:
         raise HTTPException(status_code=403, detail="Invalid user")
     
     today = date.today().isoformat()
     
-    item_obj = WorkItemRecord(
-        user_id=user['id'],
-        user_email=user['email'],
-        user_name=f"{user['first_name']} {user['last_name']}",
-        team_name=user['team_name'],
-        work_item_name=item.work_item_name,
-        microservices=item.microservices,
-        environment=item.environment,
-        can_temp_branch=item.can_temp_branch,
-        priority=item.priority,
-        comments=item.comments,
-        date=today
-    )
+    # If admin assigns to another user
+    if assigned_user_id and user.get("role") == "Admin":
+        assigned_user = await db.users.find_one({"id": assigned_user_id}, {"_id": 0, "password": 0})
+        if not assigned_user:
+            raise HTTPException(status_code=404, detail="Assigned user not found")
+        
+        item_obj = WorkItemRecord(
+            user_id=assigned_user['id'],
+            user_email=assigned_user['email'],
+            user_name=f"{assigned_user['first_name']} {assigned_user['last_name']}",
+            team_name=assigned_user['team_name'],
+            work_item_name=item.work_item_name,
+            microservices=item.microservices,
+            environment=item.environment,
+            can_temp_branch=item.can_temp_branch,
+            priority=item.priority,
+            comments=item.comments,
+            date=today
+        )
+    else:
+        # Regular user or admin creating for themselves
+        item_obj = WorkItemRecord(
+            user_id=user['id'],
+            user_email=user['email'],
+            user_name=f"{user['first_name']} {user['last_name']}",
+            team_name=user['team_name'],
+            work_item_name=item.work_item_name,
+            microservices=item.microservices,
+            environment=item.environment,
+            can_temp_branch=item.can_temp_branch,
+            priority=item.priority,
+            comments=item.comments,
+            date=today
+        )
     
     doc = item_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
