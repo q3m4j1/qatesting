@@ -141,10 +141,10 @@ export default function AssignmentsView({ token }) {
 
   return (
     <Card className="shadow-lg border-0 dark:bg-slate-800 dark:border dark:border-slate-700" data-testid="assignments-card">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b dark:border-slate-700">
+      <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-slate-700 dark:to-slate-600 border-b dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-xl font-bold" data-testid="assignments-title">Testing Session Assignments</CardTitle>
+            <CardTitle className="text-xl font-bold dark:text-white" data-testid="assignments-title">Testing Session Assignments</CardTitle>
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
