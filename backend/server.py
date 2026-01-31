@@ -904,6 +904,10 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         assigned = True
                         break
             
+            # If assigned via split strategy, skip to next item (assignments already created)
+            if assigned and has_mixed:
+                continue
+            
             # STRATEGY 3: If only Front, try second environments
             if not assigned and only_front and second_envs:
                 for env in second_envs:
