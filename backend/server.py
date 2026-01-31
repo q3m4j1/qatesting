@@ -583,6 +583,7 @@ async def create_work_item(item: WorkItemCreate, user_token: str, assigned_user_
             microservices=item.microservices,
             environment=item.environment,
             can_temp_branch=item.can_temp_branch,
+            can_temp_with_qa=item.can_temp_with_qa,
             priority=item.priority,
             comments=item.comments,
             date=today
