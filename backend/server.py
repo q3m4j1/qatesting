@@ -782,6 +782,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     env_assignments[env_id].append(item)
                     assigned_env = env['name']
                     assigned = True
+                    logger.info(f"  -> Assigned to empty env {env['name']}")
                     break
                 
                 conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
