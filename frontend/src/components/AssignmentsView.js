@@ -153,22 +153,15 @@ export default function AssignmentsView({ token }) {
       day: 'numeric' 
     });
     
-    let shareText = `Testing Environment Assignments - ${today}\n`;
-    shareText += '='.repeat(50) + '\n\n';
+    let shareText = `Testing Environment Assignments - ${today}\n\n`;
     
     Object.entries(groupedAssignments).forEach(([env, envAssignments]) => {
-      shareText += `📍 ${env} (${envAssignments.length} person${envAssignments.length > 1 ? 's' : ''})\n`;
-      shareText += '-'.repeat(50) + '\n';
+      shareText += `${env} (${envAssignments.length})\n`;
       
-      envAssignments.forEach((assignment, idx) => {
-        shareText += `${idx + 1}. ${assignment.user_name} (${assignment.team_name})\n`;
-        shareText += `   Work Item: ${assignment.work_item_name}\n`;
-        shareText += `   Microservices: ${assignment.microservices.join(', ')}\n`;
+      envAssignments.forEach((assignment) => {
+        shareText += `- ${assignment.user_name} | ${assignment.work_item_name} | ${assignment.microservices.join(', ')}`;
         if (assignment.is_temp_branch) {
-          shareText += `   ⚠️  Temp Branch Mode\n`;
-        }
-        if (assignment.conflicts && assignment.conflicts.length > 0) {
-          shareText += `   ⚠️  Conflicts: ${assignment.conflicts.join(', ')}\n`;
+          shareText += ` [Temp Branch]`;
         }
         shareText += '\n';
       });

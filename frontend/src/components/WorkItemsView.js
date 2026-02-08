@@ -200,7 +200,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
             if (!open) resetForm();
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600" data-testid="add-work-item-button">
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md" data-testid="add-work-item-button">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Work Item
               </Button>
@@ -327,7 +327,7 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="work-item-submit-button">
+                  <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white" disabled={loading} data-testid="work-item-submit-button">
                     {loading ? 'Saving...' : (editingItem ? 'Update' : 'Add')}
                   </Button>
                 </form>
