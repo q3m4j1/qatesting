@@ -358,9 +358,12 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                 {isAdmin && <th className="text-left py-3 px-4 font-semibold">Team</th>}
                 <th className="text-left py-3 px-4 font-semibold">Work Item</th>
                 <th className="text-left py-3 px-4 font-semibold">Priority</th>
+                <th className="text-left py-3 px-4 font-semibold">Target Env</th>
                 <th className="text-left py-3 px-4 font-semibold">Assigned Env</th>
                 <th className="text-left py-3 px-4 font-semibold">Microservices</th>
-                <th className="text-left py-3 px-4 font-semibold">Temp Branch</th>
+                <th className="text-left py-3 px-4 font-semibold">Team Temp</th>
+                <th className="text-left py-3 px-4 font-semibold">Cross-Team</th>
+                {isAdmin && <th className="text-left py-3 px-4 font-semibold">Notes</th>}
                 <th className="text-right py-3 px-4 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -393,6 +396,15 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       </span>
                     </td>
                     <td className="py-3 px-4">
+                      {item.environment && item.environment !== 'none' ? (
+                        <span className="px-2 py-1 bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 rounded text-xs font-medium">
+                          {item.environment}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-xs">Auto</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
                       {item.assigned_environment ? (
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
                           item.assigned_environment === 'WAITING - In Queue' 
@@ -418,6 +430,31 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       {item.can_temp_branch ? (
                         <span className="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300 rounded-full text-xs">Yes</span>
                       ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">No</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {item.can_temp_with_qa ? (
+                        <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300 rounded-full text-xs">Yes</span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">No</span>
+                      )}
+                    </td>
+                    {isAdmin && (
+                      <td className="py-3 px-4">
+                        {item.comments && item.comments.trim() !== '' ? (
+                          <div className="flex items-center gap-1" title={item.comments}>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300 rounded text-xs flex items-center gap-1 cursor-pointer">
+                              <MessageCircle className="w-3 h-3" />
+                              Has Note
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-xs">-</span>
+                        )}
+                      </td>
+                    )}
+                    <td className="py-3 px-4 text-right space-x-2">
                         <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">No</span>
                       )}
                     </td>
