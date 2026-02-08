@@ -793,6 +793,42 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             conflicts = []
             is_qa_temp_branch = False
             
+            # STRATEGY 0: If work item has a pre-selected environment (set by Admin), assign directly there
+            target_env = item.get('environment')
+            if target_env and target_env != 'none' and target_env.strip():
+                # Find the environment
+                target_env_obj = next((e for e in environments if e['name'] == target_env), None)
+                if target_env_obj:
+                    env_id = target_env_obj['id']
+                    existing_assignments = env_assignments[env_id]
+                    
+                    # Check for conflicts but assign anyway (admin decision)
+                    conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
+                    
+                    env_assignments[env_id].append(item)
+                    assigned_env = target_env
+                    assigned = True
+                    
+                    if conflict_result['has_conflict']:
+                        is_temp_branch = True
+                        conflicts = list(set(conflict_result['conflict_list']))
+            
+            # Skip other strategies if already assigned via pre-selected environment
+            if assigned:
+                # Create assignment result for pre-selected environment
+                assignment = AssignmentResult(
+                    user_id=user_id,
+                    user_name=user_name,
+                    team_name=team_name,
+                    work_item_name=work_item_name,
+                    assigned_environment=assigned_env,
+                    microservices=selected_ms_names,
+                    is_temp_branch=is_temp_branch,
+                    conflicts=conflicts if conflicts else ['Pre-selected by Admin']
+                )
+                assignments.append(assignment)
+                continue
+            
             # STRATEGY 1: Try to assign FULL item to regular environments first
             # Priority: Use normal environment if Front is free there
             for env in regular_envs:
