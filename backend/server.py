@@ -821,10 +821,6 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                             assigned = True
                             break
             
-            # Skip to next item if assigned to regular environment
-            if assigned:
-                continue
-            
             # STRATEGY 2: If not assigned to regular env, try SPLIT (FE to -second, BE to parent)
             # This is used when regular environments have conflicts that can't be resolved
             if has_mixed and second_envs:
