@@ -929,12 +929,17 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     )
                     assignments.append(be_assignment)
                     
+                    # Mark that split happened and assignments were created
                     assigned = True
-                    # Assignments already created for split, skip to next item
+                    # Set flag to indicate we did a split (assignments already created)
                     break
             
-            # Skip to next item if split was successful (assignments already created above)
-            if assigned and has_mixed:
+            # Skip to next item ONLY if split was successful (STRATEGY 2 created assignments)
+            # Check if we're in split scenario - we entered STRATEGY 2 and assigned is True
+            # The trick: STRATEGY 2 only runs if `not assigned` at start, so if assigned is True here
+            # AND we had has_mixed, it means split happened
+            if assigned and has_mixed and not assigned_env:
+                # Split happened - assignments already created, skip to next item
                 continue
             
             # STRATEGY 3: If only Front, try second environments
