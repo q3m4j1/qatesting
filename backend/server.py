@@ -930,10 +930,11 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     assignments.append(be_assignment)
                     
                     assigned = True
+                    # Assignments already created for split, skip to next item
                     break
             
-            # Skip to next item if split was successful
-            if assigned:
+            # Skip to next item if split was successful (assignments already created above)
+            if assigned and has_mixed:
                 continue
             
             # STRATEGY 3: If only Front, try second environments
