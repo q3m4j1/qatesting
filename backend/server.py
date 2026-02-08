@@ -768,6 +768,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             conflicts = []
             is_qa_temp_branch = False
             
+            logger.info(f"Item: {work_item_name} by {user_name} | has_front={has_front}, has_mixed={has_mixed}, only_front={only_front}")
+            
             # STRATEGY 1: Try to assign FULL item to regular environments first
             # Priority: Use normal environment if Front is free there
             for env in regular_envs:
