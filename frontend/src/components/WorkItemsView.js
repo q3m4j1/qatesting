@@ -455,7 +455,6 @@ export default function WorkItemsView({ token, isAdmin, user }) {
                       </td>
                     )}
                     <td className="py-3 px-4 text-right space-x-2">
-                    <td className="py-3 px-4 text-right space-x-2">
                       <Button 
                         variant="ghost" 
                         size="sm" 
