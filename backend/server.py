@@ -772,6 +772,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             
             # STRATEGY 1: Try to assign FULL item to regular environments first
             # Priority: Use normal environment if Front is free there
+            logger.info(f"  Trying STRATEGY 1 - regular envs")
             for env in regular_envs:
                 env_id = env['id']
                 existing_assignments = env_assignments[env_id]
