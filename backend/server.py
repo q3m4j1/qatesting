@@ -707,8 +707,35 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         waiting_list = []
         env_assignments = {env['id']: [] for env in environments}
         
-        # Sort work items by priority (1 is highest) then by team
-        work_items_sorted = sorted(work_items, key=lambda x: (x.get('priority', 4), x['team_name']))
+        # NEW RULE: Ensure at least one member from each team gets assigned before
+        # assigning second members from the same team
+        # Group work items by team
+        teams_items = {}
+        for item in work_items:
+            team = item['team_name']
+            if team not in teams_items:
+                teams_items[team] = []
+            teams_items[team].append(item)
+        
+        # Sort items within each team by priority
+        for team in teams_items:
+            teams_items[team] = sorted(teams_items[team], key=lambda x: x.get('priority', 4))
+        
+        # Build assignment order: first pick highest priority from each team, then second, etc.
+        work_items_sorted = []
+        teams_assigned_count = {team: 0 for team in teams_items}
+        max_items_per_team = max(len(items) for items in teams_items.values()) if teams_items else 0
+        
+        for round_num in range(max_items_per_team):
+            # For each round, pick one item from each team (by priority)
+            for team in sorted(teams_items.keys()):
+                items = teams_items[team]
+                idx = teams_assigned_count[team]
+                if idx < len(items):
+                    # Sort by priority within the remaining items
+                    item = items[idx]
+                    work_items_sorted.append(item)
+                    teams_assigned_count[team] += 1
         
         def check_conflicts(item, existing_assignments, selected_ms_ids):
             """Check for conflicts with existing assignments in an environment"""
