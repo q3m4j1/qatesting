@@ -823,7 +823,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             
             # STRATEGY 2: If not assigned to regular env, try SPLIT (FE to -second, BE to parent)
             # This is used when regular environments have conflicts that can't be resolved
-            if has_mixed and second_envs:
+            if not assigned and has_mixed and second_envs:
                 for sec_env in second_envs:
                     sec_env_id = sec_env['id']
                     parent_env_id = second_to_parent.get(sec_env_id)
