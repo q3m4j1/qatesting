@@ -766,8 +766,61 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             conflicts = []
             is_qa_temp_branch = False
             
-            # STRATEGY 1: For mixed items (Front + BE), try SPLIT first before regular assignment
-            # This optimizes -second environment usage
+            # STRATEGY 1: Try to assign FULL item to regular environments first
+            # Priority: Use normal environment if Front is free there
+            for env in regular_envs:
+                env_id = env['id']
+                existing_assignments = env_assignments[env_id]
+                
+                if not existing_assignments:
+                    # Empty environment, assign directly
+                    env_assignments[env_id].append(item)
+                    assigned_env = env['name']
+                    assigned = True
+                    break
+                
+                conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
+                
+                if not conflict_result['has_conflict']:
+                    # No conflict at all, assign to this environment
+                    env_assignments[env_id].append(item)
+                    assigned_env = env['name']
+                    assigned = True
+                    break
+                elif conflict_result['has_different_team_conflict']:
+                    # Different team conflict
+                    if conflict_result['can_resolve_with_qa_temp']:
+                        # Both parties have can_temp_with_qa = True, allow sharing with temp branch
+                        all_qa_temp = all(e.get('can_temp_with_qa', False) for e in existing_assignments)
+                        if all_qa_temp and item.get('can_temp_with_qa', False):
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            is_qa_temp_branch = True
+                            conflicts = list(set(conflict_result['conflict_list']))
+                            assigned = True
+                            break
+                    # Otherwise, skip this environment
+                    continue
+                else:
+                    # Same team with conflict - check if can use temp branches
+                    if item.get('can_temp_branch', True):  # Default ON
+                        # Check if all in this env can do temp branches
+                        all_can_temp = all(e.get('can_temp_branch', True) for e in existing_assignments)
+                        if all_can_temp:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            conflicts = list(set(conflict_result['conflict_list']))
+                            assigned = True
+                            break
+            
+            # Skip to next item if assigned to regular environment
+            if assigned:
+                continue
+            
+            # STRATEGY 2: If not assigned to regular env, try SPLIT (FE to -second, BE to parent)
+            # This is used when regular environments have conflicts that can't be resolved
             if has_mixed and second_envs:
                 for sec_env in second_envs:
                     sec_env_id = sec_env['id']
