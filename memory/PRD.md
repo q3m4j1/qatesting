@@ -71,21 +71,24 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - [x] Full CRUD for Users, Teams, Environments, Microservices
 - [x] Work item creation with all options
 - [x] **Advanced assignment algorithm with optimized -second logic:**
-  - **STRATEGY 1 (Split)**: For mixed FE+BE items, splits into separate assignments (FE → `-second` env, BE → parent env)
-  - **STRATEGY 2 (Regular)**: Assigns full items to regular environments with conflict checking
+  - **STRATEGY 1 (Regular First)**: Assigns full items to regular environments with priority for normal envs
+  - **STRATEGY 2 (Split)**: For mixed FE+BE items, splits into separate assignments (FE → `-second` env, BE → parent env)
   - **STRATEGY 3 (FE-only)**: Routes frontend-only items to `-second` environments
   - **STRATEGY 4 (Fallback)**: Uses any remaining `-second` environment
+  - **NEW: Team Fairness Rule**: Ensures at least one member from each team gets assigned before second members
 - [x] Cross-team temp branching (`can_temp_with_qa`)
 - [x] Same-team temp branching (`can_temp_branch`, default ON)
 - [x] Priority-based sorting (1=Critical to 4=Low)
 - [x] Waiting list functionality
+- [x] **Force Assign feature**: Admin can manually assign waiting items to any environment with confirmation dialog
 - [x] Google OAuth integration
 - [x] Pending user approval system
-- [x] Dark/Light mode toggle
+- [x] **Light mode by default** (with dark mode toggle)
 - [x] Search bars on all tables
-- [x] Share/Copy assignments
+- [x] **Simplified Share/Copy**: Clean text format without emojis or drawings
 - [x] Full English UI translation
-- [x] **Force Assign feature**: Admin can manually assign waiting items to any environment with confirmation dialog
+- [x] HelloCare logo integration
+- [x] **Visible Add button**: Blue/Indigo gradient for better visibility
 
 - [x] HelloCare logo integration
 
