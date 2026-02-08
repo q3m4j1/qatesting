@@ -710,6 +710,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         # Sort work items by priority (1 is highest) then by team
         work_items_sorted = sorted(work_items, key=lambda x: (x.get('priority', 4), x['team_name']))
         
+        logger.info(f"Processing {len(work_items_sorted)} work items, {len(regular_envs)} regular envs, {len(second_envs)} second envs")
+        
         def check_conflicts(item, existing_assignments, selected_ms_ids):
             """Check for conflicts with existing assignments in an environment"""
             has_conflict = False
