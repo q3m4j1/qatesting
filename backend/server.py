@@ -1111,11 +1111,6 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 assignments.append(assignment)
                 continue
             
-            # Build conflict description
-            conflict_desc = conflicts
-            if is_qa_temp_branch:
-                conflict_desc = [f"QA Cross-Team: {c}" for c in conflicts] if conflicts else ["QA Cross-Team Collaboration"]
-            
             # Create assignment result
             assignment = AssignmentResult(
                 user_id=user_id,
@@ -1125,7 +1120,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 assigned_environment=assigned_env,
                 microservices=selected_ms_names,
                 is_temp_branch=is_temp_branch,
-                conflicts=conflict_desc
+                conflicts=conflicts
             )
             assignments.append(assignment)
         
