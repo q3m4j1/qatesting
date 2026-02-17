@@ -925,12 +925,12 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             
             # STRATEGY 2: For items with backend microservices, try regular environments
             # Priority: 
-            # 1. Environments where same-team members are already assigned (to group team together)
+            # 1. Environments where ONLY same-team members are (to keep team together)
             # 2. Empty environments
-            # 3. Environments with no conflicts
+            # 3. As last resort, environments with other teams but NO conflict
             # NOTE: Cross-team temp branching is DISABLED here - only via Force Assign
             
-            # First, try environments where same team is already present
+            # First, try environments where ONLY same team is present (no cross-team mixing)
             for env in regular_envs:
                 env_id = env['id']
                 existing_assignments = env_assignments[env_id]
@@ -938,10 +938,10 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 if not existing_assignments:
                     continue  # Will try empty envs in next pass
                 
-                # Check if same team is in this environment
-                same_team_present = any(e['team_name'] == team_name for e in existing_assignments)
-                if not same_team_present:
-                    continue
+                # Check if ONLY same team is in this environment (no mixing)
+                all_same_team = all(e['team_name'] == team_name for e in existing_assignments)
+                if not all_same_team:
+                    continue  # Skip environments with other teams
                 
                 conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
                 
@@ -951,17 +951,16 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     assigned_env = env['name']
                     assigned = True
                     break
-                elif not conflict_result['has_different_team_conflict']:
-                    # Same team with conflict - check if can use temp branches
-                    if conflict_result['can_resolve_with_same_team_temp']:
-                        env_assignments[env_id].append(item)
-                        assigned_env = env['name']
-                        is_temp_branch = True
-                        conflicts = list(set(conflict_result['conflict_list']))
-                        assigned = True
-                        break
+                elif conflict_result['can_resolve_with_same_team_temp']:
+                    # Same team with conflict - use temp branches
+                    env_assignments[env_id].append(item)
+                    assigned_env = env['name']
+                    is_temp_branch = True
+                    conflicts = list(set(conflict_result['conflict_list']))
+                    assigned = True
+                    break
             
-            # If not assigned, try empty environments
+            # If not assigned, try EMPTY environments (to start a new team cluster)
             if not assigned:
                 for env in regular_envs:
                     env_id = env['id']
@@ -974,7 +973,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         assigned = True
                         break
             
-            # If not assigned, try any environment without cross-team conflict
+            # If STILL not assigned (all envs have other teams), try to find one without conflict
+            # This is last resort - mixing teams without conflict
             if not assigned:
                 for env in regular_envs:
                     env_id = env['id']
@@ -985,25 +985,14 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     
                     conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
                     
+                    # ONLY allow if there's NO conflict at all (no microservice overlap)
                     if not conflict_result['has_conflict']:
-                        # No conflict at all
                         env_assignments[env_id].append(item)
                         assigned_env = env['name']
                         assigned = True
                         break
-                    elif conflict_result['has_different_team_conflict']:
-                        # Different team conflict - DO NOT allow automatic cross-team temp
-                        # User must use Force Assign if they want this
-                        continue
-                    else:
-                        # Same team with conflict
-                        if conflict_result['can_resolve_with_same_team_temp']:
-                            env_assignments[env_id].append(item)
-                            assigned_env = env['name']
-                            is_temp_branch = True
-                            conflicts = list(set(conflict_result['conflict_list']))
-                            assigned = True
-                            break
+                    # If there's any conflict with different team, skip - go to waiting
+                    # Cross-team temp is ONLY via Force Assign
             
             # STRATEGY 2: If not assigned to regular env, try SPLIT (FE to -second, BE to parent)
             # IMPORTANT: -second environments are ONLY for Front microservice
