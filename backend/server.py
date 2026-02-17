@@ -1039,6 +1039,7 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 continue
             
             # STRATEGY 3: If only Front, try second environments
+            # -second environments are STRICTLY for Front only
             if not assigned and only_front and second_envs:
                 for env in second_envs:
                     env_id = env['id']
@@ -1058,29 +1059,21 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         assigned = True
                         break
                     elif conflict_result['has_different_team_conflict']:
-                        if conflict_result['can_resolve_with_qa_temp']:
-                            all_qa_temp = all(e.get('can_temp_with_qa', False) for e in existing_assignments)
-                            if all_qa_temp and item.get('can_temp_with_qa', False):
-                                env_assignments[env_id].append(item)
-                                assigned_env = env['name']
-                                is_temp_branch = True
-                                is_qa_temp_branch = True
-                                assigned = True
-                                break
+                        # Different team - NO cross-team temp in -second during auto-gen
                         continue
                     else:
                         # Same team, check temp branch
-                        if item.get('can_temp_branch', True):
-                            all_can_temp = all(e.get('can_temp_branch', True) for e in existing_assignments)
-                            if all_can_temp:
-                                env_assignments[env_id].append(item)
-                                assigned_env = env['name']
-                                is_temp_branch = True
-                                assigned = True
-                                break
+                        if conflict_result['can_resolve_with_same_team_temp']:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            conflicts = list(set(conflict_result['conflict_list']))
+                            assigned = True
+                            break
             
-            # STRATEGY 4: If still not assigned, try any remaining -second environment
-            if not assigned and second_envs:
+            # STRATEGY 4: If still not assigned and has ONLY Front, try any remaining -second
+            # IMPORTANT: Do NOT assign items with backend microservices to -second environments
+            if not assigned and only_front and second_envs:
                 for env in second_envs:
                     env_id = env['id']
                     existing_assignments = env_assignments[env_id]
