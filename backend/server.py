@@ -839,7 +839,91 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 assignments.append(assignment)
                 continue
             
-            # STRATEGY 1: Try to assign FULL item to regular environments first
+            # STRATEGY 1: If ONLY Front microservice, try -second environments FIRST
+            # This keeps -second for frontend-only testing
+            if only_front and second_envs:
+                # First try to join same team in -second
+                for env in second_envs:
+                    env_id = env['id']
+                    existing_assignments = env_assignments[env_id]
+                    
+                    if not existing_assignments:
+                        continue  # Will try empty -second below
+                    
+                    same_team_present = any(e['team_name'] == team_name for e in existing_assignments)
+                    if not same_team_present:
+                        continue
+                    
+                    conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
+                    
+                    if not conflict_result['has_conflict']:
+                        env_assignments[env_id].append(item)
+                        assigned_env = env['name']
+                        assigned = True
+                        break
+                    elif not conflict_result['has_different_team_conflict']:
+                        if conflict_result['can_resolve_with_same_team_temp']:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            conflicts = list(set(conflict_result['conflict_list']))
+                            assigned = True
+                            break
+                
+                # If not assigned, try empty -second
+                if not assigned:
+                    for env in second_envs:
+                        env_id = env['id']
+                        existing_assignments = env_assignments[env_id]
+                        
+                        if not existing_assignments:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            assigned = True
+                            break
+                
+                # If not assigned, try any -second without cross-team conflict
+                if not assigned:
+                    for env in second_envs:
+                        env_id = env['id']
+                        existing_assignments = env_assignments[env_id]
+                        
+                        if not existing_assignments:
+                            continue
+                        
+                        conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
+                        
+                        if not conflict_result['has_conflict']:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            assigned = True
+                            break
+                        elif conflict_result['has_different_team_conflict']:
+                            continue  # No cross-team in -second
+                        elif conflict_result['can_resolve_with_same_team_temp']:
+                            env_assignments[env_id].append(item)
+                            assigned_env = env['name']
+                            is_temp_branch = True
+                            conflicts = list(set(conflict_result['conflict_list']))
+                            assigned = True
+                            break
+            
+            # Skip to creating assignment if only_front was assigned to -second
+            if assigned and only_front:
+                assignment = AssignmentResult(
+                    user_id=user_id,
+                    user_name=user_name,
+                    team_name=team_name,
+                    work_item_name=work_item_name,
+                    assigned_environment=assigned_env,
+                    microservices=selected_ms_names,
+                    is_temp_branch=is_temp_branch,
+                    conflicts=conflicts
+                )
+                assignments.append(assignment)
+                continue
+            
+            # STRATEGY 2: For items with backend microservices, try regular environments
             # Priority: 
             # 1. Environments where same-team members are already assigned (to group team together)
             # 2. Empty environments
