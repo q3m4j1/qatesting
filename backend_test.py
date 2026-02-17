@@ -4,7 +4,7 @@ from datetime import datetime
 import json
 
 class TestEnvironmentManagerAPI:
-    def __init__(self, base_url="https://microenv-manager.preview.emergentagent.com"):
+    def __init__(self, base_url="https://team-scheduler-86.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.admin_token = None
