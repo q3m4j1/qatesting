@@ -715,8 +715,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         # Sort pre-selected by priority
         pre_selected_items = sorted(pre_selected_items, key=lambda x: x.get('priority', 4))
         
-        # STEP 2: For other items, ensure team fairness
-        # Group work items by team
+        # STEP 2: For other items, group by team and prioritize larger teams
+        # This ensures teams with more members get environments first
         teams_items = {}
         for item in other_items:
             team = item['team_name']
@@ -728,13 +728,16 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         for team in teams_items:
             teams_items[team] = sorted(teams_items[team], key=lambda x: x.get('priority', 4))
         
-        # Build assignment order: first pick highest priority from each team, then second, etc.
+        # Sort teams by size (larger teams first), then by name for consistency
+        sorted_teams = sorted(teams_items.keys(), key=lambda t: (-len(teams_items[t]), t))
+        
+        # Build assignment order: round-robin but with larger teams first
         team_fair_items = []
         teams_assigned_count = {team: 0 for team in teams_items}
         max_items_per_team = max(len(items) for items in teams_items.values()) if teams_items else 0
         
         for round_num in range(max_items_per_team):
-            for team in sorted(teams_items.keys()):
+            for team in sorted_teams:  # Larger teams first
                 items = teams_items[team]
                 idx = teams_assigned_count[team]
                 if idx < len(items):
