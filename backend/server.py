@@ -707,11 +707,18 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
         waiting_list = []
         env_assignments = {env['id']: [] for env in environments}
         
-        # NEW RULE: Ensure at least one member from each team gets assigned before
-        # assigning second members from the same team
+        # STEP 1: First, process all items with PRE-SELECTED environments (Admin priority)
+        # These have highest priority and should be assigned first
+        pre_selected_items = [item for item in work_items if item.get('environment') and item.get('environment') != 'none' and item.get('environment', '').strip()]
+        other_items = [item for item in work_items if item not in pre_selected_items]
+        
+        # Sort pre-selected by priority
+        pre_selected_items = sorted(pre_selected_items, key=lambda x: x.get('priority', 4))
+        
+        # STEP 2: For other items, ensure team fairness
         # Group work items by team
         teams_items = {}
-        for item in work_items:
+        for item in other_items:
             team = item['team_name']
             if team not in teams_items:
                 teams_items[team] = []
@@ -722,26 +729,27 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             teams_items[team] = sorted(teams_items[team], key=lambda x: x.get('priority', 4))
         
         # Build assignment order: first pick highest priority from each team, then second, etc.
-        work_items_sorted = []
+        team_fair_items = []
         teams_assigned_count = {team: 0 for team in teams_items}
         max_items_per_team = max(len(items) for items in teams_items.values()) if teams_items else 0
         
         for round_num in range(max_items_per_team):
-            # For each round, pick one item from each team (by priority)
             for team in sorted(teams_items.keys()):
                 items = teams_items[team]
                 idx = teams_assigned_count[team]
                 if idx < len(items):
-                    # Sort by priority within the remaining items
                     item = items[idx]
-                    work_items_sorted.append(item)
+                    team_fair_items.append(item)
                     teams_assigned_count[team] += 1
+        
+        # Final order: Pre-selected first, then team-fair others
+        work_items_sorted = pre_selected_items + team_fair_items
         
         def check_conflicts(item, existing_assignments, selected_ms_ids):
             """Check for conflicts with existing assignments in an environment"""
             has_conflict = False
             has_different_team_conflict = False
-            can_resolve_with_qa_temp = False
+            can_resolve_with_same_team_temp = False
             conflict_list = []
             
             for existing in existing_assignments:
@@ -755,17 +763,18 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     # Check if different team
                     if existing['team_name'] != item['team_name']:
                         has_different_team_conflict = True
-                        # Check if both have can_temp_with_qa enabled (cross-team temp branching)
-                        if item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False):
-                            can_resolve_with_qa_temp = True
-                        else:
-                            # Different team without QA temp = cannot share
-                            break
+                        # NOTE: Cross-team temp branching is DISABLED during auto-generation
+                        # It's only allowed via Force Assign by Admin
+                        break
+                    else:
+                        # Same team - check if both can use temp branches
+                        if item.get('can_temp_branch', True) and existing.get('can_temp_branch', True):
+                            can_resolve_with_same_team_temp = True
             
             return {
                 'has_conflict': has_conflict,
                 'has_different_team_conflict': has_different_team_conflict,
-                'can_resolve_with_qa_temp': can_resolve_with_qa_temp,
+                'can_resolve_with_same_team_temp': can_resolve_with_same_team_temp,
                 'conflict_list': conflict_list
             }
         
@@ -781,17 +790,18 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
             selected_ms_ids = [ms_id for ms_id, selected in microservices.items() if selected]
             selected_ms_names = [ms_id_to_name.get(ms_id, ms_id) for ms_id in selected_ms_ids]
             
-            # Check microservice types for optimized -second logic
+            # Check microservice types for -second logic
+            # IMPORTANT: -second environments are ONLY for Front microservice
             has_front = front_ms_id in selected_ms_ids if front_ms_id else 'Front' in selected_ms_names
             backend_ms_ids = [ms_id for ms_id in selected_ms_ids if ms_id != front_ms_id] if front_ms_id else []
             only_front = has_front and len(selected_ms_ids) == 1
-            has_mixed = has_front and len(backend_ms_ids) > 0
+            has_backend = len(backend_ms_ids) > 0
+            has_mixed = has_front and has_backend
             
             assigned = False
             assigned_env = None
             is_temp_branch = False
             conflicts = []
-            is_qa_temp_branch = False
             
             # STRATEGY 0: If work item has a pre-selected environment (set by Admin), assign directly there
             target_env = item.get('environment')
