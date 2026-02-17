@@ -989,30 +989,37 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     parent_existing = env_assignments[parent_env_id]
                     
                     # Check Front conflicts in -second
-                    # STRICT: Only same-team temp branching allowed in -second
+                    # STRICT: Only same-team in -second environments
                     front_conflict_in_sec = False
                     can_temp_in_sec = True
                     front_temp_conflicts = []
+                    
+                    # Check if -second has different team (even without conflict, don't mix)
+                    if sec_existing:
+                        has_different_team_in_sec = any(e['team_name'] != team_name for e in sec_existing)
+                        if has_different_team_in_sec:
+                            continue  # Don't mix teams in -second
                     
                     for existing in sec_existing:
                         existing_ms = [ms_id for ms_id, sel in existing['microservices'].items() if sel]
                         if front_ms_id in existing_ms:
                             # There's a Front conflict in -second
                             front_temp_conflicts.append(existing['user_name'])
-                            if existing['team_name'] != team_name:
-                                # Different team - NO cross-team temp in -second during auto-gen
+                            # Same team - check temp branch
+                            if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
                                 front_conflict_in_sec = True
                                 break
-                            else:
-                                # Same team - check temp branch
-                                if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
-                                    front_conflict_in_sec = True
-                                    break
                     
                     if front_conflict_in_sec:
                         continue
                     
-                    # Check BE conflicts in parent - same rules, no cross-team temp
+                    # Check if parent has different team (even without conflict, don't mix)
+                    if parent_existing:
+                        has_different_team_in_parent = any(e['team_name'] != team_name for e in parent_existing)
+                        if has_different_team_in_parent:
+                            continue  # Don't mix teams in parent
+                    
+                    # Check BE conflicts in parent - same team only
                     be_conflict_in_parent = False
                     can_temp_in_parent = True
                     be_conflicts_list = []
@@ -1021,14 +1028,9 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         common_be = set(backend_ms_ids) & set(existing_ms)
                         if common_be:
                             be_conflicts_list.extend([ms_id_to_name.get(ms_id, ms_id) for ms_id in common_be])
-                            if existing['team_name'] != team_name:
-                                # Different team - NO cross-team temp during auto-gen
-                                be_conflict_in_parent = True
-                                break
-                            else:
-                                # Same team - check temp branch
-                                if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
-                                    can_temp_in_parent = False
+                            # Same team - check temp branch
+                            if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
+                                can_temp_in_parent = False
                     
                     if be_conflict_in_parent:
                         continue
