@@ -105,17 +105,31 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 
 ### P1 (High)
 - Database query optimization (pagination for large datasets)
-- Remove unused ML dependencies from requirements.txt
 
 ### P2 (Medium)
 - Refactor server.py into separate modules (routes, models)
 - Add database indexes for frequently queried fields
+- Hover Tooltip for Notes: Show full comment text on hover over "Has Note" icon
+- Bulk Force Assign: Assign all waiting list items to environments with single action
+- Visual Indicator for Split Items: Show when a work item is split between environments
 
 ### Future Enhancements
 - Email notifications for assignments
 - Historical assignment reports
 - User preferences persistence
 - Mobile-responsive improvements
+- Admin Dashboard with metrics
+
+## Recent Updates (February 2026)
+
+### Bug Fix - Dark Mode UI
+- **Fixed**: Dialog components (Add User, Edit User) now properly styled in dark mode
+- **Fixed**: Select dropdown backgrounds now match dark theme
+- **Fixed**: Input fields in dialogs have proper dark mode styling
+- **Fixed**: Login page "Or continue with email" separator properly styled in dark mode
+- Files modified:
+  - `/app/frontend/src/components/UsersManagement.js`
+  - `/app/frontend/src/pages/LoginPage.js`
 
 ## Credentials
 - **Admin**: admin@example.com / Solab-123
