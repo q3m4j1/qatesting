@@ -922,7 +922,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                             break
             
             # STRATEGY 2: If not assigned to regular env, try SPLIT (FE to -second, BE to parent)
-            # This is used when regular environments have conflicts that can't be resolved
+            # IMPORTANT: -second environments are ONLY for Front microservice
+            # Cross-team temp branching is NOT allowed in -second during auto-generation
             if not assigned and has_mixed and second_envs:
                 for sec_env in second_envs:
                     sec_env_id = sec_env['id']
@@ -935,9 +936,8 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     sec_existing = env_assignments[sec_env_id]
                     parent_existing = env_assignments[parent_env_id]
                     
-                    # Check Front conflicts in -second (only check for Front microservice)
-                    # For -second environments, we want STRICT checking - no Front conflicts allowed
-                    # unless they can do temp branching
+                    # Check Front conflicts in -second
+                    # STRICT: Only same-team temp branching allowed in -second
                     front_conflict_in_sec = False
                     can_temp_in_sec = True
                     front_temp_conflicts = []
@@ -948,22 +948,19 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                             # There's a Front conflict in -second
                             front_temp_conflicts.append(existing['user_name'])
                             if existing['team_name'] != team_name:
-                                # Different team - check QA temp
-                                if not (item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False)):
-                                    front_conflict_in_sec = True
-                                    break
-                                # Different team but both have can_temp_with_qa - allow with temp
+                                # Different team - NO cross-team temp in -second during auto-gen
+                                front_conflict_in_sec = True
+                                break
                             else:
                                 # Same team - check temp branch
                                 if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
                                     front_conflict_in_sec = True
                                     break
-                                # Same team and both can temp - allow with temp
                     
                     if front_conflict_in_sec:
                         continue
                     
-                    # Check BE conflicts in parent
+                    # Check BE conflicts in parent - same rules, no cross-team temp
                     be_conflict_in_parent = False
                     can_temp_in_parent = True
                     be_conflicts_list = []
@@ -973,10 +970,9 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                         if common_be:
                             be_conflicts_list.extend([ms_id_to_name.get(ms_id, ms_id) for ms_id in common_be])
                             if existing['team_name'] != team_name:
-                                # Different team - check QA temp
-                                if not (item.get('can_temp_with_qa', False) and existing.get('can_temp_with_qa', False)):
-                                    be_conflict_in_parent = True
-                                    break
+                                # Different team - NO cross-team temp during auto-gen
+                                be_conflict_in_parent = True
+                                break
                             else:
                                 # Same team - check temp branch
                                 if not (item.get('can_temp_branch', True) and existing.get('can_temp_branch', True)):
