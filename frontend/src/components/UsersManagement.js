@@ -123,7 +123,7 @@ export default function UsersManagement({ token }) {
                 Add User
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md" data-testid="user-dialog">
+            <DialogContent className="max-w-md dark:bg-slate-800 dark:border-slate-700" data-testid="user-dialog">
               <DialogHeader>
                 <DialogTitle>{editingUser ? 'Update Userin' : 'Add User New'}</DialogTitle>
               </DialogHeader>
