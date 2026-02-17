@@ -148,6 +148,7 @@ export default function UsersManagement({ token }) {
                     onChange={(e) => setFormData({...formData, first_name: e.target.value})}
                     required
                     data-testid="user-firstname-input"
+                    className="dark:bg-slate-700 dark:border-slate-600"
                   />
                 </div>
                 <div className="space-y-2">
@@ -158,6 +159,7 @@ export default function UsersManagement({ token }) {
                     onChange={(e) => setFormData({...formData, last_name: e.target.value})}
                     required
                     data-testid="user-lastname-input"
+                    className="dark:bg-slate-700 dark:border-slate-600"
                   />
                 </div>
                 <div className="space-y-2">
@@ -169,6 +171,7 @@ export default function UsersManagement({ token }) {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
                     data-testid="user-email-input"
+                    className="dark:bg-slate-700 dark:border-slate-600"
                   />
                 </div>
                 <div className="space-y-2">
@@ -181,6 +184,7 @@ export default function UsersManagement({ token }) {
                     required={!editingUser}
                     placeholder={editingUser ? 'Leave blank to keep the same' : ''}
                     data-testid="user-password-input"
+                    className="dark:bg-slate-700 dark:border-slate-600"
                   />
                 </div>
                 <div className="space-y-2">
@@ -191,6 +195,7 @@ export default function UsersManagement({ token }) {
                     onChange={(e) => setFormData({...formData, team_name: e.target.value})}
                     required
                     data-testid="user-team-input"
+                    className="dark:bg-slate-700 dark:border-slate-600"
                   />
                 </div>
                 <Button type="submit" className="w-full dark:bg-slate-800" disabled={loading} data-testid="user-submit-button">
