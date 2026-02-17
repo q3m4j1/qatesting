@@ -1114,59 +1114,9 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                     # Set flag to indicate we did a split (assignments already created)
                     break
             
-            # Skip to next item ONLY if split was successful (STRATEGY 2 created assignments)
-            # Check if we're in split scenario - we entered STRATEGY 2 and assigned is True
-            # The trick: STRATEGY 2 only runs if `not assigned` at start, so if assigned is True here
-            # AND we had has_mixed, it means split happened
+            # Skip to next item ONLY if split was successful (STRATEGY 3 created assignments)
             if assigned and has_mixed and not assigned_env:
-                # Split happened - assignments already created, skip to next item
                 continue
-            
-            # STRATEGY 3: If only Front, try second environments
-            # -second environments are STRICTLY for Front only
-            if not assigned and only_front and second_envs:
-                for env in second_envs:
-                    env_id = env['id']
-                    existing_assignments = env_assignments[env_id]
-                    
-                    if not existing_assignments:
-                        env_assignments[env_id].append(item)
-                        assigned_env = env['name']
-                        assigned = True
-                        break
-                    
-                    conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
-                    
-                    if not conflict_result['has_conflict']:
-                        env_assignments[env_id].append(item)
-                        assigned_env = env['name']
-                        assigned = True
-                        break
-                    elif conflict_result['has_different_team_conflict']:
-                        # Different team - NO cross-team temp in -second during auto-gen
-                        continue
-                    else:
-                        # Same team, check temp branch
-                        if conflict_result['can_resolve_with_same_team_temp']:
-                            env_assignments[env_id].append(item)
-                            assigned_env = env['name']
-                            is_temp_branch = True
-                            conflicts = list(set(conflict_result['conflict_list']))
-                            assigned = True
-                            break
-            
-            # STRATEGY 4: If still not assigned and has ONLY Front, try any remaining -second
-            # IMPORTANT: Do NOT assign items with backend microservices to -second environments
-            if not assigned and only_front and second_envs:
-                for env in second_envs:
-                    env_id = env['id']
-                    existing_assignments = env_assignments[env_id]
-                    
-                    if not existing_assignments:
-                        env_assignments[env_id].append(item)
-                        assigned_env = env['name']
-                        assigned = True
-                        break
             
             # If still not assigned, add to waiting list
             if not assigned:
