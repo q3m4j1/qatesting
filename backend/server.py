@@ -840,47 +840,80 @@ async def generate_assignments(admin_token: str, date_filter: Optional[str] = No
                 continue
             
             # STRATEGY 1: Try to assign FULL item to regular environments first
-            # Priority: Use normal environment if Front is free there
+            # Priority: 
+            # 1. Environments where same-team members are already assigned (to group team together)
+            # 2. Empty environments
+            # 3. Environments with no conflicts
+            # NOTE: Cross-team temp branching is DISABLED here - only via Force Assign
+            
+            # First, try environments where same team is already present
             for env in regular_envs:
                 env_id = env['id']
                 existing_assignments = env_assignments[env_id]
                 
                 if not existing_assignments:
-                    # Empty environment, assign directly
-                    env_assignments[env_id].append(item)
-                    assigned_env = env['name']
-                    assigned = True
-                    break
+                    continue  # Will try empty envs in next pass
+                
+                # Check if same team is in this environment
+                same_team_present = any(e['team_name'] == team_name for e in existing_assignments)
+                if not same_team_present:
+                    continue
                 
                 conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
                 
                 if not conflict_result['has_conflict']:
-                    # No conflict at all, assign to this environment
+                    # No conflict, join team members
                     env_assignments[env_id].append(item)
                     assigned_env = env['name']
                     assigned = True
                     break
-                elif conflict_result['has_different_team_conflict']:
-                    # Different team conflict
-                    if conflict_result['can_resolve_with_qa_temp']:
-                        # Both parties have can_temp_with_qa = True, allow sharing with temp branch
-                        all_qa_temp = all(e.get('can_temp_with_qa', False) for e in existing_assignments)
-                        if all_qa_temp and item.get('can_temp_with_qa', False):
-                            env_assignments[env_id].append(item)
-                            assigned_env = env['name']
-                            is_temp_branch = True
-                            is_qa_temp_branch = True
-                            conflicts = list(set(conflict_result['conflict_list']))
-                            assigned = True
-                            break
-                    # Otherwise, skip this environment
-                    continue
-                else:
+                elif not conflict_result['has_different_team_conflict']:
                     # Same team with conflict - check if can use temp branches
-                    if item.get('can_temp_branch', True):  # Default ON
-                        # Check if all in this env can do temp branches
-                        all_can_temp = all(e.get('can_temp_branch', True) for e in existing_assignments)
-                        if all_can_temp:
+                    if conflict_result['can_resolve_with_same_team_temp']:
+                        env_assignments[env_id].append(item)
+                        assigned_env = env['name']
+                        is_temp_branch = True
+                        conflicts = list(set(conflict_result['conflict_list']))
+                        assigned = True
+                        break
+            
+            # If not assigned, try empty environments
+            if not assigned:
+                for env in regular_envs:
+                    env_id = env['id']
+                    existing_assignments = env_assignments[env_id]
+                    
+                    if not existing_assignments:
+                        # Empty environment, assign directly
+                        env_assignments[env_id].append(item)
+                        assigned_env = env['name']
+                        assigned = True
+                        break
+            
+            # If not assigned, try any environment without cross-team conflict
+            if not assigned:
+                for env in regular_envs:
+                    env_id = env['id']
+                    existing_assignments = env_assignments[env_id]
+                    
+                    if not existing_assignments:
+                        continue  # Already tried above
+                    
+                    conflict_result = check_conflicts(item, existing_assignments, selected_ms_ids)
+                    
+                    if not conflict_result['has_conflict']:
+                        # No conflict at all
+                        env_assignments[env_id].append(item)
+                        assigned_env = env['name']
+                        assigned = True
+                        break
+                    elif conflict_result['has_different_team_conflict']:
+                        # Different team conflict - DO NOT allow automatic cross-team temp
+                        # User must use Force Assign if they want this
+                        continue
+                    else:
+                        # Same team with conflict
+                        if conflict_result['can_resolve_with_same_team_temp']:
                             env_assignments[env_id].append(item)
                             assigned_env = env['name']
                             is_temp_branch = True
