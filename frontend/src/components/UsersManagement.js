@@ -131,10 +131,10 @@ export default function UsersManagement({ token }) {
                 <div className="space-y-2">
                   <Label htmlFor="role">Role</Label>
                   <Select value={formData.role} onValueChange={(value) => setFormData({...formData, role: value})}>
-                    <SelectTrigger data-testid="user-role-select">
+                    <SelectTrigger data-testid="user-role-select" className="dark:bg-slate-700 dark:border-slate-600">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-slate-700 dark:border-slate-600">
                       <SelectItem value="Admin">Admin</SelectItem>
                       <SelectItem value="User">User</SelectItem>
                     </SelectContent>
