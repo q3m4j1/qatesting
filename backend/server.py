@@ -138,6 +138,7 @@ class WorkItemUpdate(BaseModel):
     can_temp_with_qa: Optional[bool] = None
     priority: Optional[int] = None
     comments: Optional[str] = None
+    user_id: Optional[str] = None  # Allow admin to reassign work item to different user
 
 class AssignmentResult(BaseModel):
     user_id: str
@@ -637,6 +638,17 @@ async def update_work_item(item_id: str, item: WorkItemUpdate, user_token: str):
         raise HTTPException(status_code=403, detail="You do not have permission to update this work item")
     
     update_data = {k: v for k, v in item.model_dump().items() if v is not None}
+    
+    # If admin is reassigning to a different user, update user-related fields
+    if 'user_id' in update_data and user['role'] == 'Admin':
+        new_user_id = update_data['user_id']
+        new_user = await db.users.find_one({"id": new_user_id}, {"_id": 0, "password": 0})
+        if new_user:
+            update_data['user_email'] = new_user['email']
+            update_data['user_name'] = f"{new_user['first_name']} {new_user['last_name']}"
+            update_data['team_name'] = new_user['team_name']
+        else:
+            raise HTTPException(status_code=404, detail="Target user not found")
     
     await db.work_items.update_one({"id": item_id}, {"$set": update_data})
     

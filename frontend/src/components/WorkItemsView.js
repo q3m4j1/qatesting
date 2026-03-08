@@ -100,7 +100,15 @@ export default function WorkItemsView({ token, isAdmin, user }) {
       }
 
       if (editingItem) {
-        await axios.put(`${API}/work-items/${editingItem.id}`, formData, {
+        // Build update payload - include user_id if admin is reassigning
+        const updatePayload = { ...formData };
+        if (isAdmin && formData.assigned_user_id && formData.assigned_user_id !== editingItem.user_id) {
+          updatePayload.user_id = formData.assigned_user_id;
+        }
+        // Remove assigned_user_id from payload as it's not part of the update model
+        delete updatePayload.assigned_user_id;
+        
+        await axios.put(`${API}/work-items/${editingItem.id}`, updatePayload, {
           params: { user_token: token }
         });
         toast.success('Work item updated successfully!');

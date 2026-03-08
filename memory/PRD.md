@@ -122,6 +122,16 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 
 ## Recent Updates (February 2026)
 
+### Bug Fix - Work Item Reassignment (NEW)
+- **Fixed**: Admin can now reassign work items to different users
+- **Fixed**: UI properly updates to show new user after reassignment
+- **Fixed**: Assignment generation uses the correct (updated) user
+- Backend changes:
+  - Added `user_id` field to `WorkItemUpdate` model
+  - `update_work_item` endpoint now updates `user_email`, `user_name`, `team_name` when user is changed
+- Frontend changes:
+  - `WorkItemsView.js` now sends `user_id` in update payload when admin reassigns
+
 ### Bug Fix - Dark Mode UI
 - **Fixed**: Dialog components (Add User, Edit User) now properly styled in dark mode
 - **Fixed**: Select dropdown backgrounds now match dark theme
