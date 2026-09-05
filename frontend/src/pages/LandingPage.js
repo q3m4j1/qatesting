@@ -22,12 +22,12 @@ export default function LandingPage({ user, onLogout }) {
     {
       id: 'tv-setups',
       title: 'TV Setups',
-      description: 'Configure and manage TV display setups across different locations and environments.',
+      description: 'Configure and manage TV display setups, Hello devices, and room equipment across different floors.',
       icon: Tv,
       color: 'from-purple-500 to-pink-500',
       bgColor: 'bg-purple-50 dark:bg-purple-900/20',
       borderColor: 'border-purple-200 dark:border-purple-800',
-      available: false,
+      available: true,
       path: '/tv-setups'
     },
     {

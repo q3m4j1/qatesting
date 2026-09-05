@@ -155,6 +155,92 @@ class ForceAssignRequest(BaseModel):
     work_item_name: str
     target_environment: str
 
+# ============ TV SETUPS MODELS ============
+
+class TVFloor(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TVDevice(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    type: str  # tv, hello, whiteboard, roomsign, bed
+    label: str
+    sn: Optional[str] = None  # Serial number
+    x: float = 0
+    y: float = 0
+    w: float = 20
+    h: float = 20
+    status: str = "free"  # free, inuse, not_available
+    status_changed_at: Optional[datetime] = None
+    status_changed_by: Optional[str] = None
+
+class TVRoom(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    floor_id: str
+    name: str
+    side: str = "left"  # left or right
+    pos: int = 1
+    devices: List[TVDevice] = []
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class TVRoomCreate(BaseModel):
+    floor_id: str
+    name: str
+    side: str = "left"
+    pos: int = 1
+
+class TVRoomUpdate(BaseModel):
+    name: Optional[str] = None
+    side: Optional[str] = None
+    pos: Optional[int] = None
+
+class TVDeviceCreate(BaseModel):
+    type: str
+    label: str
+    sn: Optional[str] = None
+    x: float = 0
+    y: float = 0
+    w: float = 20
+    h: float = 20
+
+class TVDeviceUpdate(BaseModel):
+    label: Optional[str] = None
+    sn: Optional[str] = None
+    x: Optional[float] = None
+    y: Optional[float] = None
+    w: Optional[float] = None
+    h: Optional[float] = None
+    status: Optional[str] = None
+
+class TVNote(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    target_type: str  # room or device
+    target_id: str
+    room_id: Optional[str] = None
+    text: str
+    author_id: str
+    author_name: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    edited_at: Optional[datetime] = None
+
+class TVNoteCreate(BaseModel):
+    target_type: str
+    target_id: str
+    room_id: Optional[str] = None
+    text: str
+
+class TVActivity(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    message: str
+    user_id: str
+    user_name: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 # Helper functions
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -1312,6 +1398,323 @@ async def force_assign_to_environment(request: ForceAssignRequest, admin_token: 
         logger.error(f"Error force assigning: {e}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error force assigning: {str(e)}")
+
+# ============ TV SETUPS API ENDPOINTS ============
+
+# Floors
+@api_router.get("/tv/floors")
+async def get_tv_floors(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    floors = await db.tv_floors.find({}, {"_id": 0}).sort("name", 1).to_list(100)
+    return floors
+
+@api_router.post("/tv/floors")
+async def create_tv_floor(floor: TVFloor, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    floor_doc = floor.model_dump()
+    floor_doc['created_at'] = floor_doc['created_at'].isoformat()
+    await db.tv_floors.insert_one(floor_doc)
+    floor_doc.pop('_id', None)
+    return floor_doc
+
+@api_router.put("/tv/floors/{floor_id}")
+async def update_tv_floor(floor_id: str, name: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.tv_floors.update_one({"id": floor_id}, {"$set": {"name": name}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Floor not found")
+    return {"success": True}
+
+@api_router.delete("/tv/floors/{floor_id}")
+async def delete_tv_floor(floor_id: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.tv_rooms.delete_many({"floor_id": floor_id})
+    await db.tv_floors.delete_one({"id": floor_id})
+    return {"success": True}
+
+# Rooms
+@api_router.get("/tv/rooms")
+async def get_tv_rooms(user_token: str, floor_id: Optional[str] = None):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    query = {"floor_id": floor_id} if floor_id else {}
+    rooms = await db.tv_rooms.find(query, {"_id": 0}).sort([("pos", 1), ("side", 1)]).to_list(500)
+    return rooms
+
+@api_router.post("/tv/rooms")
+async def create_tv_room(room: TVRoomCreate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    room_doc = TVRoom(**room.model_dump()).model_dump()
+    room_doc['created_at'] = room_doc['created_at'].isoformat()
+    await db.tv_rooms.insert_one(room_doc)
+    
+    await log_tv_activity(user, f"created room '{room.name}'")
+    room_doc.pop('_id', None)
+    return room_doc
+
+@api_router.put("/tv/rooms/{room_id}")
+async def update_tv_room(room_id: str, room: TVRoomUpdate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {k: v for k, v in room.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.tv_rooms.update_one({"id": room_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    updated = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/tv/rooms/{room_id}")
+async def delete_tv_room(room_id: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    if room:
+        await log_tv_activity(user, f"deleted room '{room.get('name', room_id)}'")
+    
+    await db.tv_rooms.delete_one({"id": room_id})
+    await db.tv_notes.delete_many({"room_id": room_id})
+    return {"success": True}
+
+# Devices
+@api_router.post("/tv/rooms/{room_id}/devices")
+async def add_device_to_room(room_id: str, device: TVDeviceCreate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    new_device = TVDevice(**device.model_dump()).model_dump()
+    
+    await db.tv_rooms.update_one({"id": room_id}, {"$push": {"devices": new_device}})
+    await log_tv_activity(user, f"added {device.type} '{device.label}' to {room['name']}")
+    
+    updated_room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    return updated_room
+
+@api_router.put("/tv/rooms/{room_id}/devices/{device_id}")
+async def update_device(room_id: str, device_id: str, device: TVDeviceUpdate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    if not room:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    update_data = {k: v for k, v in device.model_dump().items() if v is not None}
+    
+    if user['role'] != 'Admin':
+        allowed_fields = {'status'}
+        update_data = {k: v for k, v in update_data.items() if k in allowed_fields}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    if 'status' in update_data:
+        update_data['status_changed_at'] = datetime.now(timezone.utc).isoformat()
+        update_data['status_changed_by'] = f"{user['first_name']} {user['last_name']}"
+        
+        device_info = next((d for d in room.get('devices', []) if d['id'] == device_id), None)
+        if device_info:
+            status_label = {'free': 'free to use', 'inuse': 'in use', 'not_available': 'not available'}.get(update_data['status'], update_data['status'])
+            await log_tv_activity(user, f"marked {device_info['label']} ({room['name']}) as {status_label}")
+    
+    await db.tv_rooms.update_one(
+        {"id": room_id, "devices.id": device_id},
+        {"$set": {f"devices.$.{k}": v for k, v in update_data.items()}}
+    )
+    
+    updated_room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    return updated_room
+
+@api_router.delete("/tv/rooms/{room_id}/devices/{device_id}")
+async def delete_device(room_id: str, device_id: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    room = await db.tv_rooms.find_one({"id": room_id}, {"_id": 0})
+    if room:
+        device_info = next((d for d in room.get('devices', []) if d['id'] == device_id), None)
+        if device_info:
+            await log_tv_activity(user, f"removed {device_info['label']} from {room['name']}")
+    
+    await db.tv_rooms.update_one({"id": room_id}, {"$pull": {"devices": {"id": device_id}}})
+    await db.tv_notes.delete_many({"target_id": device_id})
+    return {"success": True}
+
+# Notes
+@api_router.get("/tv/notes")
+async def get_tv_notes(user_token: str, target_type: Optional[str] = None, target_id: Optional[str] = None, room_id: Optional[str] = None):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    query = {}
+    if target_type:
+        query["target_type"] = target_type
+    if target_id:
+        query["target_id"] = target_id
+    if room_id:
+        query["room_id"] = room_id
+    
+    notes = await db.tv_notes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return notes
+
+@api_router.post("/tv/notes")
+async def create_tv_note(note: TVNoteCreate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    note_doc = TVNote(
+        **note.model_dump(),
+        author_id=user['id'],
+        author_name=f"{user['first_name']} {user['last_name']}"
+    ).model_dump()
+    note_doc['created_at'] = note_doc['created_at'].isoformat()
+    
+    await db.tv_notes.insert_one(note_doc)
+    note_doc.pop('_id', None)
+    return note_doc
+
+@api_router.put("/tv/notes/{note_id}")
+async def update_tv_note(note_id: str, text: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    note = await db.tv_notes.find_one({"id": note_id}, {"_id": 0})
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    if note['author_id'] != user['id'] and user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    await db.tv_notes.update_one(
+        {"id": note_id},
+        {"$set": {"text": text, "edited_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    updated = await db.tv_notes.find_one({"id": note_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/tv/notes/{note_id}")
+async def delete_tv_note(note_id: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    note = await db.tv_notes.find_one({"id": note_id}, {"_id": 0})
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    
+    if note['author_id'] != user['id'] and user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    await db.tv_notes.delete_one({"id": note_id})
+    return {"success": True}
+
+# Activity Log
+@api_router.get("/tv/activity")
+async def get_tv_activity(user_token: str, limit: int = 100):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=12)
+    activities = await db.tv_activity.find(
+        {"timestamp": {"$gte": cutoff.isoformat()}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(limit)
+    
+    return activities
+
+async def log_tv_activity(user: dict, message: str):
+    activity = TVActivity(
+        message=message,
+        user_id=user['id'],
+        user_name=f"{user['first_name']} {user['last_name']}"
+    ).model_dump()
+    activity['timestamp'] = activity['timestamp'].isoformat()
+    await db.tv_activity.insert_one(activity)
+
+@api_router.post("/tv/init-defaults")
+async def init_tv_defaults(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    existing_floors = await db.tv_floors.count_documents({})
+    if existing_floors > 0:
+        return {"message": "Data already exists", "initialized": False}
+    
+    default_floors = [
+        {"id": "f1", "name": "Floor 1 - Corridor A", "created_at": datetime.now(timezone.utc).isoformat()},
+        {"id": "f2", "name": "Floor 2 - Corridor B", "created_at": datetime.now(timezone.utc).isoformat()}
+    ]
+    await db.tv_floors.insert_many(default_floors)
+    
+    default_rooms = [
+        {
+            "id": "r1", "floor_id": "f1", "name": "Dhoma 1", "side": "left", "pos": 1,
+            "devices": [
+                {"id": "r1-tv1", "type": "tv", "label": "TV 1", "sn": "SN-TV10001", "x": 3, "y": 5, "w": 30, "h": 24, "status": "free"},
+                {"id": "r1-h1", "type": "hello", "label": "Hello 1", "sn": "SN-HL10001", "x": 3, "y": 0, "w": 9, "h": 6, "status": "free"},
+                {"id": "r1-bed1", "type": "bed", "label": "Bed 1", "x": 4, "y": 36, "w": 22, "h": 54, "status": "free"}
+            ],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": "r2", "floor_id": "f1", "name": "Dhoma 2", "side": "right", "pos": 1,
+            "devices": [
+                {"id": "r2-tv1", "type": "tv", "label": "TV 1", "sn": "SN-TV20001", "x": 3, "y": 5, "w": 30, "h": 24, "status": "free"},
+                {"id": "r2-wb1", "type": "whiteboard", "label": "Whiteboard", "sn": "SN-WB20001", "x": 63, "y": 4, "w": 12, "h": 26, "status": "free"},
+                {"id": "r2-bed1", "type": "bed", "label": "Bed 1", "x": 35, "y": 36, "w": 22, "h": 54, "status": "free"}
+            ],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        },
+        {
+            "id": "r3", "floor_id": "f2", "name": "Dhoma A1", "side": "left", "pos": 1,
+            "devices": [
+                {"id": "r3-tv1", "type": "tv", "label": "TV 1", "sn": "SN-TV30001", "x": 3, "y": 5, "w": 30, "h": 24, "status": "free"},
+                {"id": "r3-h1", "type": "hello", "label": "Hello 1", "sn": "SN-HL30001", "x": 3, "y": 0, "w": 9, "h": 6, "status": "free"},
+                {"id": "r3-rs1", "type": "roomsign", "label": "Room Sign", "sn": "SN-RS30001", "x": 44, "y": 0, "w": 6, "h": 8, "status": "free"}
+            ],
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+    ]
+    await db.tv_rooms.insert_many(default_rooms)
+    
+    return {"message": "Default data initialized", "initialized": True, "floors": 2, "rooms": 3}
 
 # Include the router in the main app
 app.include_router(api_router)

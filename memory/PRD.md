@@ -122,6 +122,26 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 
 ## Recent Updates (February 2026)
 
+### TV Setups Module (NEW - September 2026)
+- **Created**: Full TV Setups management module
+- **Features**:
+  - Floor management (create, edit, delete)
+  - Room management (left/right sides, positions)
+  - Device management (TV, Hello, Whiteboard, Room Sign, Bed)
+  - Device status tracking (Free, In Use, Not Available)
+  - Activity logging (last 12 hours)
+  - Status summary badges on rooms
+  - Serial number tracking
+- **Permissions**:
+  - Admin: Full CRUD operations on floors, rooms, devices
+  - User: Can view all and change device status only
+- **Backend API**: `/api/tv/*` endpoints
+- **Files created/modified**:
+  - `/app/frontend/src/pages/TVSetups.js` (NEW)
+  - `/app/backend/server.py` (TV models and endpoints added)
+  - `/app/frontend/src/App.js` (routing updated)
+  - `/app/frontend/src/pages/LandingPage.js` (TV Setups activated)
+
 ### Landing Page / Hub (NEW - February 2026)
 - **Created**: New landing page ("HelloCare Hub") after login
 - **Features**:
