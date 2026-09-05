@@ -41,6 +41,7 @@ export default function FindDevices({ user, token, onLogout }) {
   
   // Settings dialog
   const [showSettings, setShowSettings] = useState(false);
+  const [authMode, setAuthMode] = useState('simple'); // 'simple' or 'advanced'
   const [azureUsername, setAzureUsername] = useState('');
   const [azurePassword, setAzurePassword] = useState('');
   const [clientId, setClientId] = useState('sol.web.endpointmanager.pkce');
@@ -119,17 +120,22 @@ export default function FindDevices({ user, token, onLogout }) {
 
     setSavingSettings(true);
     try {
-      await axios.post(`${API}/findenv/settings`, null, {
-        params: {
-          user_token: token,
-          azure_username: azureUsername.trim(),
-          azure_password: azurePassword,
-          client_id: clientId.trim(),
-          client_secret: clientSecret.trim() || null,
-          scope: scope.trim()
-        }
-      });
-      toast.success('Settings saved successfully');
+      // In simple mode, use defaults; in advanced mode, use user-provided values
+      const settingsParams = {
+        user_token: token,
+        azure_username: azureUsername.trim(),
+        azure_password: azurePassword
+      };
+
+      if (authMode === 'advanced') {
+        settingsParams.client_id = clientId.trim();
+        settingsParams.client_secret = clientSecret.trim() || null;
+        settingsParams.scope = scope.trim();
+      }
+      // Simple mode uses server defaults (no client_id/secret/scope params sent)
+
+      await axios.post(`${API}/findenv/settings`, null, { params: settingsParams });
+      toast.success(authMode === 'simple' ? 'Credentials saved successfully' : 'OAuth settings saved successfully');
       setShowSettings(false);
       setAzurePassword('');
       setClientSecret('');
@@ -221,6 +227,10 @@ export default function FindDevices({ user, token, onLogout }) {
               setAzureUsername(settings?.azure_username || '');
               setClientId(settings?.client_id || 'sol.web.endpointmanager.pkce');
               setScope(settings?.scope || 'openid profile sol.web.endpointmanager');
+              // Set mode based on whether custom OAuth settings exist
+              const hasCustomOAuth = settings?.has_client_secret || 
+                (settings?.client_id && settings.client_id !== 'sol.web.endpointmanager.pkce');
+              setAuthMode(hasCustomOAuth ? 'advanced' : 'simple');
               setShowSettings(true);
             }}>
               <Settings className="w-4 h-4 mr-2" />
@@ -501,12 +511,40 @@ export default function FindDevices({ user, token, onLogout }) {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="dark:bg-slate-800 max-w-md">
           <DialogHeader>
-            <DialogTitle>Azure Credentials & OAuth Settings</DialogTitle>
+            <DialogTitle>Azure Credentials</DialogTitle>
             <DialogDescription>
-              Configure your Azure AD credentials and OAuth client settings for MDM API access.
+              Configure your Azure AD credentials for MDM API access.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+          
+          {/* Auth Mode Tabs */}
+          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+            <button
+              onClick={() => setAuthMode('simple')}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                authMode === 'simple'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+              data-testid="simple-mode-tab"
+            >
+              Simple
+            </button>
+            <button
+              onClick={() => setAuthMode('advanced')}
+              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                authMode === 'advanced'
+                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
+              }`}
+              data-testid="advanced-mode-tab"
+            >
+              Advanced OAuth
+            </button>
+          </div>
+
+          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+            {/* Common fields - Username & Password */}
             <div>
               <Label>Azure Username (Email) *</Label>
               <Input
@@ -529,42 +567,59 @@ export default function FindDevices({ user, token, onLogout }) {
                 data-testid="azure-password-input"
               />
             </div>
-            <div className="border-t pt-4 mt-4">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">OAuth Client Settings</p>
-            </div>
-            <div>
-              <Label>Client ID</Label>
-              <Input
-                value={clientId}
-                onChange={(e) => setClientId(e.target.value)}
-                placeholder="sol.web.endpointmanager.pkce"
-                className="dark:bg-slate-700"
-                data-testid="client-id-input"
-              />
-              <p className="text-xs text-gray-500 mt-1">Default: sol.web.endpointmanager.pkce</p>
-            </div>
-            <div>
-              <Label>Client Secret (Optional)</Label>
-              <Input
-                type="password"
-                value={clientSecret}
-                onChange={(e) => setClientSecret(e.target.value)}
-                placeholder="For confidential clients only"
-                className="dark:bg-slate-700"
-                data-testid="client-secret-input"
-              />
-              <p className="text-xs text-gray-500 mt-1">Required if your client is configured as confidential</p>
-            </div>
-            <div>
-              <Label>Scope</Label>
-              <Input
-                value={scope}
-                onChange={(e) => setScope(e.target.value)}
-                placeholder="openid profile sol.web.endpointmanager"
-                className="dark:bg-slate-700"
-                data-testid="scope-input"
-              />
-            </div>
+
+            {/* Simple Mode Info */}
+            {authMode === 'simple' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Simple Mode:</strong> Uses default OAuth client settings. 
+                  Switch to Advanced if you need custom client_id or client_secret.
+                </p>
+              </div>
+            )}
+
+            {/* Advanced Mode - OAuth Settings */}
+            {authMode === 'advanced' && (
+              <>
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">OAuth Client Settings</p>
+                </div>
+                <div>
+                  <Label>Client ID</Label>
+                  <Input
+                    value={clientId}
+                    onChange={(e) => setClientId(e.target.value)}
+                    placeholder="sol.web.endpointmanager.pkce"
+                    className="dark:bg-slate-700"
+                    data-testid="client-id-input"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Default: sol.web.endpointmanager.pkce</p>
+                </div>
+                <div>
+                  <Label>Client Secret (Optional)</Label>
+                  <Input
+                    type="password"
+                    value={clientSecret}
+                    onChange={(e) => setClientSecret(e.target.value)}
+                    placeholder="For confidential clients only"
+                    className="dark:bg-slate-700"
+                    data-testid="client-secret-input"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Required if your client is configured as confidential</p>
+                </div>
+                <div>
+                  <Label>Scope</Label>
+                  <Input
+                    value={scope}
+                    onChange={(e) => setScope(e.target.value)}
+                    placeholder="openid profile sol.web.endpointmanager"
+                    className="dark:bg-slate-700"
+                    data-testid="scope-input"
+                  />
+                </div>
+              </>
+            )}
+
             <Button onClick={saveSettings} disabled={savingSettings} className="w-full" data-testid="save-settings-button">
               {savingSettings ? (
                 <>
@@ -572,7 +627,7 @@ export default function FindDevices({ user, token, onLogout }) {
                   Saving...
                 </>
               ) : (
-                'Save Settings'
+                authMode === 'simple' ? 'Save Credentials' : 'Save OAuth Settings'
               )}
             </Button>
           </div>
