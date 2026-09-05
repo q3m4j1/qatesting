@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import ThemeToggle from '@/components/ThemeToggle';
+import RoomEditor from '@/components/RoomEditor';
 import { ArrowLeft, Plus, Tv, Monitor, Bed, Square, MessageSquare, Activity, Settings, Trash2, Edit } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -48,6 +49,7 @@ export default function TVSetups({ user, token }) {
   const [roomDialogOpen, setRoomDialogOpen] = useState(false);
   const [deviceDialogOpen, setDeviceDialogOpen] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null); // For RoomEditor
   
   // Form data
   const [newFloorName, setNewFloorName] = useState('');
@@ -55,6 +57,12 @@ export default function TVSetups({ user, token }) {
   const [newDevice, setNewDevice] = useState({ type: 'tv', label: '', sn: '' });
 
   const isAdmin = user?.role === 'Admin';
+
+  // Get floor name for editor
+  const getFloorName = (floorId) => {
+    const floor = floors.find(f => f.id === floorId);
+    return floor?.name || 'Floor';
+  };
 
   useEffect(() => {
     fetchData();
@@ -313,6 +321,7 @@ export default function TVSetups({ user, token }) {
                 isAdmin={isAdmin}
                 isSelected={selectedRoom?.id === room.id}
                 onSelect={() => setSelectedRoom(room)}
+                onDoubleClick={() => setEditingRoom(room)}
                 onDelete={() => deleteRoom(room.id)}
                 onStatusChange={updateDeviceStatus}
                 onDeleteDevice={deleteDevice}
@@ -334,6 +343,7 @@ export default function TVSetups({ user, token }) {
                 isAdmin={isAdmin}
                 isSelected={selectedRoom?.id === room.id}
                 onSelect={() => setSelectedRoom(room)}
+                onDoubleClick={() => setEditingRoom(room)}
                 onDelete={() => deleteRoom(room.id)}
                 onStatusChange={updateDeviceStatus}
                 onDeleteDevice={deleteDevice}
@@ -474,12 +484,29 @@ export default function TVSetups({ user, token }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Room Editor - Full Screen */}
+      {editingRoom && (
+        <RoomEditor
+          room={editingRoom}
+          floorName={getFloorName(editingRoom.floor_id)}
+          token={token}
+          isAdmin={isAdmin}
+          onClose={() => setEditingRoom(null)}
+          onUpdate={() => {
+            fetchData();
+            // Update the editing room with fresh data
+            const updatedRoom = rooms.find(r => r.id === editingRoom.id);
+            if (updatedRoom) setEditingRoom(updatedRoom);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // Room Card Component
-function RoomCard({ room, isAdmin, isSelected, onSelect, onDelete, onStatusChange, onDeleteDevice, getRoomStatusSummary }) {
+function RoomCard({ room, isAdmin, isSelected, onSelect, onDoubleClick, onDelete, onStatusChange, onDeleteDevice, getRoomStatusSummary }) {
   const statusSummary = getRoomStatusSummary(room);
   const devices = room.devices || [];
   
@@ -487,10 +514,14 @@ function RoomCard({ room, isAdmin, isSelected, onSelect, onDelete, onStatusChang
     <Card 
       className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-purple-500 shadow-lg' : 'hover:shadow-md'} dark:bg-slate-800`}
       onClick={onSelect}
+      onDoubleClick={onDoubleClick}
     >
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{room.name}</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            {room.name}
+            <span className="text-xs text-gray-400 font-normal">(double-click to edit)</span>
+          </CardTitle>
           <div className="flex items-center gap-2">
             {/* Status Summary Badges */}
             {statusSummary.free > 0 && (

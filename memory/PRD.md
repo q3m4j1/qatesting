@@ -132,12 +132,20 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
   - Activity logging (last 12 hours)
   - Status summary badges on rooms
   - Serial number tracking
+  - **Room Editor** - Visual canvas with drag & drop device positioning
+    - Double-click on room to open editor
+    - Drag devices to reposition
+    - Arrow keys for fine movement
+    - Device Status sidebar
+    - Room Notes section
+    - Grid background for alignment
 - **Permissions**:
-  - Admin: Full CRUD operations on floors, rooms, devices
+  - Admin: Full CRUD operations on floors, rooms, devices + drag positioning
   - User: Can view all and change device status only
 - **Backend API**: `/api/tv/*` endpoints
 - **Files created/modified**:
   - `/app/frontend/src/pages/TVSetups.js` (NEW)
+  - `/app/frontend/src/components/RoomEditor.js` (NEW)
   - `/app/backend/server.py` (TV models and endpoints added)
   - `/app/frontend/src/App.js` (routing updated)
   - `/app/frontend/src/pages/LandingPage.js` (TV Setups activated)
