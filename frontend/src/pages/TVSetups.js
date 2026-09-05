@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import ThemeToggle from '@/components/ThemeToggle';
+import AppHeader from '@/components/AppHeader';
 import RoomEditor from '@/components/RoomEditor';
-import { ArrowLeft, Plus, Tv, Monitor, Bed, Square, MessageSquare, Activity, Settings, Trash2, Edit } from 'lucide-react';
+import { Plus, Tv, Monitor, Bed, Square, Activity, Trash2 } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -35,7 +35,7 @@ const STATUS_LABELS = {
   not_available: 'Not Available'
 };
 
-export default function TVSetups({ user, token }) {
+export default function TVSetups({ user, token, onLogout }) {
   const navigate = useNavigate();
   const [floors, setFloors] = useState([]);
   const [rooms, setRooms] = useState([]);
@@ -225,44 +225,22 @@ export default function TVSetups({ user, token }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50 to-pink-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/home')}
-                className="flex items-center gap-2"
-                data-testid="back-to-home"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="hidden sm:inline">Back to Hub</span>
-              </Button>
-              <img src="/hellocare-logo.png" alt="HelloCare" className="h-10" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-800 dark:text-white">TV Setups</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {isAdmin ? 'Admin View' : 'User View'} • {user?.first_name} {user?.last_name}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { fetchActivity(); setActivityDialogOpen(true); }}
-              >
-                <Activity className="w-4 h-4 mr-1" />
-                <span className="hidden sm:inline">Activity</span>
-              </Button>
-              <ThemeToggle />
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader user={user} onLogout={onLogout} backLabel="Back to Hub" />
 
       <div className="container mx-auto px-4 py-6">
+        {/* Page Title & Activity Button */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">TV Setups</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { fetchActivity(); setActivityDialogOpen(true); }}
+          >
+            <Activity className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">Activity</span>
+          </Button>
+        </div>
+
         {/* Floor Tabs */}
         <div className="flex flex-wrap items-center gap-2 mb-6">
           {floors.map(floor => (
@@ -493,6 +471,7 @@ export default function TVSetups({ user, token }) {
           token={token}
           isAdmin={isAdmin}
           onClose={() => setEditingRoom(null)}
+          onLogout={onLogout}
           onUpdate={() => {
             fetchData();
             // Update the editing room with fresh data

@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import ThemeToggle from '@/components/ThemeToggle';
-import { ClipboardList, Tv, Search, LogOut } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
+import { ClipboardList, Tv, Search } from 'lucide-react';
 
 export default function LandingPage({ user, onLogout }) {
   const navigate = useNavigate();
@@ -52,35 +52,7 @@ export default function LandingPage({ user, onLogout }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <img src="/hellocare-logo.png" alt="HelloCare" className="h-10" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-800 dark:text-white">HelloCare Hub</h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Welcome, {user?.first_name} {user?.last_name}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-300 hidden sm:block">
-                {user?.role === 'Admin' ? '👑 Admin' : '👤 User'}
-              </span>
-              <ThemeToggle />
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={onLogout}
-                className="flex items-center gap-2"
-                data-testid="logout-button"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader user={user} onLogout={onLogout} showBack={false} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

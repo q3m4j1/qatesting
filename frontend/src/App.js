@@ -60,7 +60,7 @@ function AppRouter({ user, onLogin, onLogout }) {
         path="/tv-setups" 
         element={
           user ? 
-            <TVSetups user={user} token={user.id} /> : 
+            <TVSetups user={user} token={user.id} onLogout={onLogout} /> : 
             <Navigate to="/" replace />
         } 
       />

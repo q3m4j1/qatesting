@@ -1,25 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { ArrowLeft, Plus, Trash2, Edit, Tv, Monitor, Square, Bed, GripVertical, X, MessageSquare } from 'lucide-react';
+import ThemeToggle from '@/components/ThemeToggle';
+import { ArrowLeft, Plus, Trash2, Edit, Tv, Monitor, Square, Bed, X, MessageSquare, LogOut } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 const DEVICE_TYPES = {
-  tv: { label: 'TV', icon: Tv, color: '#1a1a2e', defaultW: 30, defaultH: 24 },
-  hello: { label: 'Hello', icon: Monitor, color: '#16a34a', defaultW: 9, defaultH: 6 },
-  whiteboard: { label: 'Whiteboard', icon: Square, color: '#7c3aed', defaultW: 12, defaultH: 26 },
-  roomsign: { label: 'Room Sign', icon: Square, color: '#ea580c', defaultW: 6, defaultH: 8 },
-  bed: { label: 'Bed', icon: Bed, color: '#64748b', defaultW: 22, defaultH: 54 }
+  tv: { label: 'TV', icon: Tv, color: '#1a1a2e', defaultW: 15, defaultH: 10 },
+  hello: { label: 'Hello', icon: Monitor, color: '#16a34a', defaultW: 5, defaultH: 5 },
+  whiteboard: { label: 'Whiteboard', icon: Square, color: '#7c3aed', defaultW: 8, defaultH: 12 },
+  roomsign: { label: 'Room Sign', icon: Square, color: '#ea580c', defaultW: 4, defaultH: 5 },
+  bed: { label: 'Bed', icon: Bed, color: '#64748b', defaultW: 12, defaultH: 20 }
 };
 
 const STATUS_COLORS = {
@@ -34,16 +33,20 @@ const STATUS_LABELS = {
   not_available: 'N/A'
 };
 
-export default function RoomEditor({ room, floorName, token, isAdmin, onClose, onUpdate }) {
+export default function RoomEditor({ room, floorName, token, isAdmin, onClose, onUpdate, onLogout }) {
   const canvasRef = useRef(null);
   const [devices, setDevices] = useState(room.devices || []);
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeCorner, setResizeCorner] = useState(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [notes, setNotes] = useState([]);
   const [showAddDevice, setShowAddDevice] = useState(false);
   const [showEditRoom, setShowEditRoom] = useState(false);
-  const [newDevice, setNewDevice] = useState({ type: 'tv', label: '', sn: '' });
+  const [showEditDevice, setShowEditDevice] = useState(false);
+  const [editingDevice, setEditingDevice] = useState(null);
+  const [newDevice, setNewDevice] = useState({ type: 'tv', label: '', sn: '', w: 15, h: 10 });
   const [roomName, setRoomName] = useState(room.name);
   const [newNote, setNewNote] = useState('');
 
@@ -142,21 +145,83 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
     
     try {
       const typeInfo = DEVICE_TYPES[newDevice.type];
+      const deviceW = newDevice.w || typeInfo.defaultW;
+      const deviceH = newDevice.h || typeInfo.defaultH;
+      
       const res = await axios.post(`${API}/tv/rooms/${room.id}/devices`, {
-        ...newDevice,
-        x: 50 - typeInfo.defaultW / 2,
-        y: 50 - typeInfo.defaultH / 2,
-        w: typeInfo.defaultW,
-        h: typeInfo.defaultH
+        type: newDevice.type,
+        label: newDevice.label,
+        sn: newDevice.sn,
+        x: 50 - deviceW / 2,
+        y: 50 - deviceH / 2,
+        w: deviceW,
+        h: deviceH
       }, { params: { user_token: token } });
       
+      // Real-time update - immediately show new device
       setDevices(res.data.devices);
       setShowAddDevice(false);
-      setNewDevice({ type: 'tv', label: '', sn: '' });
+      setNewDevice({ type: 'tv', label: '', sn: '', w: 15, h: 10 });
       toast.success('Device added');
       onUpdate();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error adding device');
+    }
+  };
+
+  const updateDeviceSize = async (deviceId, newW, newH) => {
+    try {
+      await axios.put(`${API}/tv/rooms/${room.id}/devices/${deviceId}`,
+        { w: newW, h: newH },
+        { params: { user_token: token } }
+      );
+      
+      setDevices(prev => prev.map(d =>
+        d.id === deviceId ? { ...d, w: newW, h: newH } : d
+      ));
+      
+      if (selectedDevice?.id === deviceId) {
+        setSelectedDevice(prev => ({ ...prev, w: newW, h: newH }));
+      }
+      
+      toast.success('Size updated');
+    } catch (error) {
+      toast.error('Error updating size');
+    }
+  };
+
+  const openEditDevice = (device) => {
+    setEditingDevice({ ...device });
+    setShowEditDevice(true);
+  };
+
+  const saveEditDevice = async () => {
+    if (!editingDevice) return;
+    
+    try {
+      await axios.put(`${API}/tv/rooms/${room.id}/devices/${editingDevice.id}`,
+        { 
+          label: editingDevice.label, 
+          sn: editingDevice.sn,
+          w: editingDevice.w,
+          h: editingDevice.h
+        },
+        { params: { user_token: token } }
+      );
+      
+      setDevices(prev => prev.map(d =>
+        d.id === editingDevice.id ? { ...d, ...editingDevice } : d
+      ));
+      
+      if (selectedDevice?.id === editingDevice.id) {
+        setSelectedDevice(editingDevice);
+      }
+      
+      setShowEditDevice(false);
+      setEditingDevice(null);
+      toast.success('Device updated');
+    } catch (error) {
+      toast.error('Error updating device');
     }
   };
 
@@ -325,16 +390,28 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
             <div className="flex items-center gap-2">
               {isAdmin && (
                 <>
-                  <Button variant="outline" onClick={() => setShowEditRoom(true)}>
+                  <Button variant="outline" size="sm" onClick={() => setShowEditRoom(true)}>
                     Edit Room
                   </Button>
-                  <Button variant="outline" className="text-red-500 hover:bg-red-50" onClick={deleteRoom}>
+                  <Button variant="outline" size="sm" className="text-red-500 hover:bg-red-50" onClick={deleteRoom}>
                     Delete Room
                   </Button>
-                  <Button onClick={() => setShowAddDevice(true)} className="bg-green-600 hover:bg-green-700">
-                    <Plus className="w-4 h-4 mr-2" /> Add Device
+                  <Button size="sm" onClick={() => setShowAddDevice(true)} className="bg-green-600 hover:bg-green-700">
+                    <Plus className="w-4 h-4 mr-1" /> Add Device
                   </Button>
                 </>
+              )}
+              <ThemeToggle />
+              {onLogout && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onLogout}
+                  className="flex items-center gap-2 hover:bg-red-50 hover:text-red-600"
+                  data-testid="logout-button"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>
@@ -471,16 +548,27 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
                       onClick={() => setSelectedDevice(device)}
                     >
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                           <p className="font-medium text-sm dark:text-white">{device.label}</p>
-                          <p className="text-xs text-gray-500">{typeInfo.label} • {device.sn || 'No SN'}</p>
+                          <p className="text-xs text-gray-500">{typeInfo.label} • {device.sn || 'No SN'} • {Math.round(device.w)}x{Math.round(device.h)}</p>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div 
-                            className="w-2 h-2 rounded-full"
-                            style={{ backgroundColor: STATUS_COLORS[device.status || 'free'] }}
-                          />
-                          <span className="text-xs font-medium">{STATUS_LABELS[device.status || 'free']}</span>
+                        <div className="flex items-center gap-2">
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openEditDevice(device); }}
+                              className="p-1 text-gray-400 hover:text-blue-500"
+                              title="Edit size"
+                            >
+                              <Edit className="w-3 h-3" />
+                            </button>
+                          )}
+                          <div className="flex items-center gap-1">
+                            <div 
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: STATUS_COLORS[device.status || 'free'] }}
+                            />
+                            <span className="text-xs font-medium">{STATUS_LABELS[device.status || 'free']}</span>
+                          </div>
                         </div>
                       </div>
                       
@@ -560,11 +648,15 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
         <DialogContent className="dark:bg-slate-800">
           <DialogHeader>
             <DialogTitle>Add Device to {room.name}</DialogTitle>
+            <DialogDescription>Add a new device and configure its size</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Device Type</Label>
-              <Select value={newDevice.type} onValueChange={v => setNewDevice({...newDevice, type: v})}>
+              <Select value={newDevice.type} onValueChange={v => {
+                const typeInfo = DEVICE_TYPES[v];
+                setNewDevice({...newDevice, type: v, w: typeInfo.defaultW, h: typeInfo.defaultH});
+              }}>
                 <SelectTrigger className="dark:bg-slate-700">
                   <SelectValue />
                 </SelectTrigger>
@@ -593,8 +685,87 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
                 className="dark:bg-slate-700"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Width (%)</Label>
+                <Input 
+                  type="number"
+                  min="2"
+                  max="50"
+                  value={newDevice.w || DEVICE_TYPES[newDevice.type].defaultW}
+                  onChange={e => setNewDevice({...newDevice, w: parseFloat(e.target.value) || 10})}
+                  className="dark:bg-slate-700"
+                />
+              </div>
+              <div>
+                <Label>Height (%)</Label>
+                <Input 
+                  type="number"
+                  min="2"
+                  max="50"
+                  value={newDevice.h || DEVICE_TYPES[newDevice.type].defaultH}
+                  onChange={e => setNewDevice({...newDevice, h: parseFloat(e.target.value) || 10})}
+                  className="dark:bg-slate-700"
+                />
+              </div>
+            </div>
             <Button onClick={addDevice} className="w-full">Add Device</Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Device Dialog */}
+      <Dialog open={showEditDevice} onOpenChange={setShowEditDevice}>
+        <DialogContent className="dark:bg-slate-800">
+          <DialogHeader>
+            <DialogTitle>Edit Device</DialogTitle>
+            <DialogDescription>Modify device label, serial number, and size</DialogDescription>
+          </DialogHeader>
+          {editingDevice && (
+            <div className="space-y-4">
+              <div>
+                <Label>Label</Label>
+                <Input 
+                  value={editingDevice.label}
+                  onChange={e => setEditingDevice({...editingDevice, label: e.target.value})}
+                  className="dark:bg-slate-700"
+                />
+              </div>
+              <div>
+                <Label>Serial Number</Label>
+                <Input 
+                  value={editingDevice.sn || ''}
+                  onChange={e => setEditingDevice({...editingDevice, sn: e.target.value})}
+                  className="dark:bg-slate-700"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Width (%)</Label>
+                  <Input 
+                    type="number"
+                    min="2"
+                    max="50"
+                    value={editingDevice.w}
+                    onChange={e => setEditingDevice({...editingDevice, w: parseFloat(e.target.value) || 10})}
+                    className="dark:bg-slate-700"
+                  />
+                </div>
+                <div>
+                  <Label>Height (%)</Label>
+                  <Input 
+                    type="number"
+                    min="2"
+                    max="50"
+                    value={editingDevice.h}
+                    onChange={e => setEditingDevice({...editingDevice, h: parseFloat(e.target.value) || 10})}
+                    className="dark:bg-slate-700"
+                  />
+                </div>
+              </div>
+              <Button onClick={saveEditDevice} className="w-full">Save Changes</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -603,6 +774,7 @@ export default function RoomEditor({ room, floorName, token, isAdmin, onClose, o
         <DialogContent className="dark:bg-slate-800">
           <DialogHeader>
             <DialogTitle>Edit Room</DialogTitle>
+            <DialogDescription>Change the room name</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
