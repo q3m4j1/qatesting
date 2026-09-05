@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
+import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import AuthCallback from "./pages/AuthCallback";
@@ -23,11 +24,16 @@ function AppRouter({ user, onLogin, onLogout }) {
         path="/" 
         element={
           user ? 
-            (user.role === 'Admin' ? 
-              <Navigate to="/admin" replace /> : 
-              <Navigate to="/user" replace />
-            ) : 
+            <Navigate to="/home" replace /> : 
             <LoginPage onLogin={onLogin} />
+        } 
+      />
+      <Route 
+        path="/home" 
+        element={
+          user ? 
+            <LandingPage user={user} onLogout={onLogout} /> : 
+            <Navigate to="/" replace />
         } 
       />
       <Route path="/pending-approval" element={<PendingApprovalPage />} />
@@ -47,7 +53,36 @@ function AppRouter({ user, onLogin, onLogout }) {
             <Navigate to="/" replace />
         } 
       />
-      <Route path="/dashboard" element={<Navigate to={user?.role === 'Admin' ? '/admin' : '/user'} replace />} />
+      <Route path="/dashboard" element={<Navigate to="/home" replace />} />
+      {/* Placeholder routes for future apps */}
+      <Route 
+        path="/tv-setups" 
+        element={
+          user ? 
+            <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold mb-4 dark:text-white">TV Setups</h1>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Coming Soon</p>
+                <a href="/home" className="text-blue-500 hover:underline">← Back to Home</a>
+              </div>
+            </div> : 
+            <Navigate to="/" replace />
+        } 
+      />
+      <Route 
+        path="/find-devices" 
+        element={
+          user ? 
+            <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold mb-4 dark:text-white">Find Hello Devices</h1>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Coming Soon</p>
+                <a href="/home" className="text-blue-500 hover:underline">← Back to Home</a>
+              </div>
+            </div> : 
+            <Navigate to="/" replace />
+        } 
+      />
     </Routes>
   );
 }

@@ -122,6 +122,22 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 
 ## Recent Updates (February 2026)
 
+### Landing Page / Hub (NEW - February 2026)
+- **Created**: New landing page ("HelloCare Hub") after login
+- **Features**:
+  - 3 application cards: Testing Manager (active), TV Setups (coming soon), Find Hello Devices (coming soon)
+  - User info and role displayed in header
+  - Dark/Light mode toggle
+  - Logout button
+- **Navigation**:
+  - Click on Testing Manager → Goes to Admin/User Dashboard
+  - Back to Hub button added to both Admin and User dashboards
+- Files created/modified:
+  - `/app/frontend/src/pages/LandingPage.js` (NEW)
+  - `/app/frontend/src/App.js` (routing updated)
+  - `/app/frontend/src/pages/AdminDashboard.js` (back button added)
+  - `/app/frontend/src/pages/UserDashboard.js` (back button added)
+
 ### Bug Fix - Work Item Reassignment (NEW)
 - **Fixed**: Admin can now reassign work items to different users
 - **Fixed**: UI properly updates to show new user after reassignment
