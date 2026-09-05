@@ -43,6 +43,9 @@ export default function FindDevices({ user, token, onLogout }) {
   const [showSettings, setShowSettings] = useState(false);
   const [azureUsername, setAzureUsername] = useState('');
   const [azurePassword, setAzurePassword] = useState('');
+  const [clientId, setClientId] = useState('sol.web.endpointmanager.pkce');
+  const [clientSecret, setClientSecret] = useState('');
+  const [scope, setScope] = useState('openid profile sol.web.endpointmanager');
   const [savingSettings, setSavingSettings] = useState(false);
   
   // Environment dialog
@@ -120,12 +123,16 @@ export default function FindDevices({ user, token, onLogout }) {
         params: {
           user_token: token,
           azure_username: azureUsername.trim(),
-          azure_password: azurePassword
+          azure_password: azurePassword,
+          client_id: clientId.trim(),
+          client_secret: clientSecret.trim() || null,
+          scope: scope.trim()
         }
       });
       toast.success('Settings saved successfully');
       setShowSettings(false);
       setAzurePassword('');
+      setClientSecret('');
       fetchData();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Failed to save settings');
@@ -212,6 +219,8 @@ export default function FindDevices({ user, token, onLogout }) {
           {isAdmin && (
             <Button variant="outline" onClick={() => {
               setAzureUsername(settings?.azure_username || '');
+              setClientId(settings?.client_id || 'sol.web.endpointmanager.pkce');
+              setScope(settings?.scope || 'openid profile sol.web.endpointmanager');
               setShowSettings(true);
             }}>
               <Settings className="w-4 h-4 mr-2" />
@@ -490,42 +499,80 @@ export default function FindDevices({ user, token, onLogout }) {
 
       {/* Settings Dialog */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="dark:bg-slate-800">
+        <DialogContent className="dark:bg-slate-800 max-w-md">
           <DialogHeader>
-            <DialogTitle>Azure Credentials</DialogTitle>
+            <DialogTitle>Azure Credentials & OAuth Settings</DialogTitle>
             <DialogDescription>
-              Enter your Azure AD credentials for MDM API access. These will be encrypted and stored securely.
+              Configure your Azure AD credentials and OAuth client settings for MDM API access.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <div>
-              <Label>Azure Username (Email)</Label>
+              <Label>Azure Username (Email) *</Label>
               <Input
                 type="email"
                 value={azureUsername}
                 onChange={(e) => setAzureUsername(e.target.value)}
                 placeholder="user@company.com"
                 className="dark:bg-slate-700"
+                data-testid="azure-username-input"
               />
             </div>
             <div>
-              <Label>Azure Password</Label>
+              <Label>Azure Password *</Label>
               <Input
                 type="password"
                 value={azurePassword}
                 onChange={(e) => setAzurePassword(e.target.value)}
                 placeholder="Enter password"
                 className="dark:bg-slate-700"
+                data-testid="azure-password-input"
               />
             </div>
-            <Button onClick={saveSettings} disabled={savingSettings} className="w-full">
+            <div className="border-t pt-4 mt-4">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">OAuth Client Settings</p>
+            </div>
+            <div>
+              <Label>Client ID</Label>
+              <Input
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                placeholder="sol.web.endpointmanager.pkce"
+                className="dark:bg-slate-700"
+                data-testid="client-id-input"
+              />
+              <p className="text-xs text-gray-500 mt-1">Default: sol.web.endpointmanager.pkce</p>
+            </div>
+            <div>
+              <Label>Client Secret (Optional)</Label>
+              <Input
+                type="password"
+                value={clientSecret}
+                onChange={(e) => setClientSecret(e.target.value)}
+                placeholder="For confidential clients only"
+                className="dark:bg-slate-700"
+                data-testid="client-secret-input"
+              />
+              <p className="text-xs text-gray-500 mt-1">Required if your client is configured as confidential</p>
+            </div>
+            <div>
+              <Label>Scope</Label>
+              <Input
+                value={scope}
+                onChange={(e) => setScope(e.target.value)}
+                placeholder="openid profile sol.web.endpointmanager"
+                className="dark:bg-slate-700"
+                data-testid="scope-input"
+              />
+            </div>
+            <Button onClick={saveSettings} disabled={savingSettings} className="w-full" data-testid="save-settings-button">
               {savingSettings ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (
-                'Save Credentials'
+                'Save Settings'
               )}
             </Button>
           </div>

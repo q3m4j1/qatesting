@@ -274,6 +274,8 @@ class FindEnvSettings(BaseModel):
     azure_username: Optional[str] = None
     azure_password_encrypted: Optional[str] = None  # Encrypted password
     client_id: str = "sol.web.endpointmanager.pkce"
+    client_secret: Optional[str] = None  # Optional for confidential clients
+    scope: str = "openid profile sol.web.endpointmanager"  # Configurable scope
     last_login: Optional[datetime] = None
     tokens: Dict[str, dict] = {}  # env_name -> {token, exp, refresh}
 
@@ -1925,26 +1927,46 @@ async def get_findenv_settings(user_token: str):
         "azure_username": settings.get("azure_username"),
         "has_password": bool(settings.get("azure_password_encrypted")),
         "is_configured": bool(settings.get("azure_username") and settings.get("azure_password_encrypted")),
+        "client_id": settings.get("client_id", "sol.web.endpointmanager.pkce"),
+        "has_client_secret": bool(settings.get("client_secret_encrypted")),
+        "scope": settings.get("scope", "openid profile sol.web.endpointmanager"),
         "last_login": settings.get("last_login"),
         "token_count": len(settings.get("tokens", {}))
     }
 
 @api_router.post("/findenv/settings")
-async def save_findenv_settings(user_token: str, azure_username: str, azure_password: str):
+async def save_findenv_settings(
+    user_token: str, 
+    azure_username: str, 
+    azure_password: str,
+    client_id: str = "sol.web.endpointmanager.pkce",
+    client_secret: Optional[str] = None,
+    scope: str = "openid profile sol.web.endpointmanager"
+):
     user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
     if not user or user['role'] != 'Admin':
         raise HTTPException(status_code=403, detail="Admin access required")
     
     encrypted_password = encrypt_password(azure_password)
     
+    update_data = {
+        "id": "findenv_settings",
+        "azure_username": azure_username,
+        "azure_password_encrypted": encrypted_password,
+        "client_id": client_id,
+        "scope": scope,
+        "tokens": {}  # Clear tokens on credential change
+    }
+    
+    # Only store client_secret if provided
+    if client_secret:
+        update_data["client_secret_encrypted"] = encrypt_password(client_secret)
+    else:
+        update_data["client_secret_encrypted"] = None
+    
     await db.findenv_settings.update_one(
         {"id": "findenv_settings"},
-        {"$set": {
-            "id": "findenv_settings",
-            "azure_username": azure_username,
-            "azure_password_encrypted": encrypted_password,
-            "tokens": {}  # Clear tokens on credential change
-        }},
+        {"$set": update_data},
         upsert=True
     )
     
@@ -1980,6 +2002,18 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
     azure_username = settings.get("azure_username")
     stored_tokens = settings.get("tokens", {})
     
+    # Get configurable OAuth settings
+    client_id = settings.get("client_id", "sol.web.endpointmanager.pkce")
+    scope = settings.get("scope", "openid profile sol.web.endpointmanager")
+    
+    # Decrypt client_secret if it exists
+    client_secret = None
+    if settings.get("client_secret_encrypted"):
+        try:
+            client_secret = decrypt_password(settings["client_secret_encrypted"])
+        except Exception:
+            logging.warning("Failed to decrypt client_secret, proceeding without it")
+    
     results = []
     found_online = None
     device_details = None
@@ -2002,17 +2036,47 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
             if not token or (token_exp - time.time() < 15 * 60):
                 # Try to get new token via ROPC flow
                 try:
+                    # Build the form data for OAuth token request
+                    form_data = {
+                        "grant_type": "password",
+                        "username": azure_username,
+                        "password": azure_password,
+                        "client_id": client_id,
+                        "scope": scope
+                    }
+                    
+                    # Add client_secret if available (required for confidential clients)
+                    if client_secret:
+                        form_data["client_secret"] = client_secret
+                    
+                    token_url = f"https://login.{env_name}.solaborate.com/core/connect/token"
                     token_response = await client.post(
-                        f"https://login.{env_name}.solaborate.com/core/connect/token",
-                        data={
-                            "grant_type": "password",
-                            "username": azure_username,
-                            "password": azure_password,
-                            "client_id": "sol.web.endpointmanager.pkce",
-                            "scope": "openid profile sol.web.endpointmanager"
-                        },
+                        token_url,
+                        data=form_data,
                         headers={"Content-Type": "application/x-www-form-urlencoded"}
                     )
+                    
+                    # Log detailed error info for debugging
+                    if token_response.status_code != 200:
+                        error_body = token_response.text[:500]
+                        logging.warning(f"OAuth token request failed for {env_name}: {token_response.status_code} - {error_body}")
+                        
+                        # Parse OAuth error for better user feedback
+                        try:
+                            error_json = token_response.json()
+                            error_code = error_json.get("error", "unknown")
+                            error_desc = error_json.get("error_description", "")
+                            if error_code == "invalid_client":
+                                result.error_message = "Invalid client configuration. Check client_id and client_secret in Settings."
+                            elif error_code == "invalid_grant":
+                                result.error_message = "Invalid username or password for this environment."
+                            elif error_code == "unauthorized_client":
+                                result.error_message = "Client not authorized for password grant. Contact admin."
+                            else:
+                                result.error_message = f"Auth error: {error_code} - {error_desc}"
+                        except Exception:
+                            result.error_message = f"Authentication failed: HTTP {token_response.status_code}"
+                    
                     if token_response.status_code == 200:
                         token_data = token_response.json()
                         token = token_data.get("access_token")
@@ -2032,7 +2096,9 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
                             }
                     else:
                         result.status = "auth_failed"
-                        result.error_message = f"Authentication failed: {token_response.status_code}"
+                        # Keep the detailed error message if already set
+                        if not result.error_message:
+                            result.error_message = f"Authentication failed: HTTP {token_response.status_code}"
                         results.append(result)
                         continue
                 except Exception as e:
@@ -2123,7 +2189,7 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
     
     return {
         "serial": serial,
-        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access")],
+        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access", "auth_failed", "unreachable")],
         "found_online": found_online,
         "device_details": device_details
     }

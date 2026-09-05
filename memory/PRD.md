@@ -123,23 +123,31 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 ## Recent Updates (February 2026)
 
 ### Find Hello Devices Module (NEW - September 2026)
-- **Created**: Device search across 13 MDM environments
+- **Created**: Device search across 13+ MDM environments
 - **Features**:
   - Search by serial number across all active environments
-  - Real-time device status (online, offline, not registered)
+  - Real-time device status (online, offline, not registered, auth_failed)
   - Device details display (model, firmware, IP address)
   - Search history tracking
   - Environment management (Admin can add/edit/delete)
   - Azure credentials configuration (encrypted storage)
+  - **OAuth Settings**: Configurable client_id, client_secret, and scope
   - Show all environments toggle
+  - **Improved Error Handling**: Descriptive error messages for auth failures
 - **Permissions**:
-  - Admin: Configure Azure credentials, manage environments
+  - Admin: Configure Azure credentials & OAuth settings, manage environments
   - User: Search devices, view history
 - **Backend API**: `/api/findenv/*` endpoints
 - **Authentication**: ROPC flow with Azure AD for MDM API access
-- **Files created**:
-  - `/app/frontend/src/pages/FindDevices.js` (NEW)
+- **Bug Fix (September 2026)**: 
+  - Fixed HTTP 400 Bad Request error handling
+  - Added configurable OAuth client_id, client_secret, and scope
+  - Auth failures now return descriptive error messages to UI
+  - Results filter now includes auth_failed and unreachable statuses
+- **Files created/modified**:
+  - `/app/frontend/src/pages/FindDevices.js` (NEW/Updated)
   - `/app/backend/server.py` (FindEnv models and endpoints)
+  - `/app/backend/tests/test_findenv.py` (Test file)
 
 ### TV Setups Module (NEW - September 2026)
 - **Created**: Full TV Setups management module
@@ -219,3 +227,9 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - `GET /api/assignments` - Get assignments
 - `POST /api/assignments/force-assign` - Force assign waiting item to environment
 - `DELETE /api/assignments` - Delete assignments
+- `GET /api/tv-setups/*` - TV Setups management (floors, rooms, devices)
+- `GET /api/findenv/environments` - List MDM environments
+- `GET /api/findenv/settings` - Get OAuth settings (Admin)
+- `POST /api/findenv/settings` - Save OAuth settings with client_id, client_secret, scope
+- `GET /api/findenv/search/{serial}` - Search device across environments
+- `GET /api/findenv/history` - Get search history

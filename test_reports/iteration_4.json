@@ -1,0 +1,27 @@
+{
+  "summary": "Verified Find Hello Devices OAuth bug fix. Backend: 7/7 pytest passed (settings CRUD with new OAuth fields client_id/client_secret/scope, search returns auth_failed with descriptive error_message, history). Frontend: Login OK, landing page shows 3 modules, FindDevices page shows '15 active environments', Configure dialog shows all 5 OAuth fields (Azure Username, Azure Password, Client ID, Client Secret, Scope), saving new OAuth settings works and shows success toast, device search displays per-environment 'Auth Failed' rows with actionable message 'Invalid client configuration. Check client_id and client_secret in Settings.' History tab lists recent searches. All requested features passing.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Find Hello Devices - Settings Dialog", "issues": ["Input fields inside Configure dialog (Azure Username, Password, Client ID, Client Secret, Scope) lack data-testid attributes, making automation harder. Consider adding data-testid=azure-username-input, azure-password-input, client-id-input, client-secret-input, scope-input, save-settings-button."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_findenv.py", "/app/test_reports/pytest/findenv_results.xml"],
+  "action_items": [
+    "(Optional) Add data-testid attributes to Configure dialog input fields and Save Settings button for better testability."
+  ],
+  "critical_code_review_comments": [
+    "save_findenv_settings uses query params for azure_password and client_secret. Secrets in query strings can leak into server access logs and browser history. Consider switching to a Pydantic request body with POST JSON.",
+    "search_device: when azure_password_encrypted is missing the endpoint returns 400 with a hard error, but if client_secret_encrypted decryption fails it only logs a warning and continues without a client_secret — behavior is inconsistent. Consider surfacing to user.",
+    "FindDevices.js line 128: `client_secret: clientSecret.trim() || null` sends the literal string 'null' via axios params when empty. FastAPI parses this as string 'null' unless coerced. Confirm empty client_secret is handled correctly server-side (currently server checks truthiness which works, but consider omitting param when empty)."
+  ],
+  "updated_files": ["/app/backend/tests/test_findenv.py"],
+  "success_rate": {"backend": "100% (7/7)", "frontend": "100% - all requested flows verified"},
+  "test_credentials": "admin@example.com / Solab-123",
+  "seed_data_creation": "Wrote TEST_user@example.com credentials into findenv_settings via API and TESTSERIAL999 search into findenv_search_history. Main agent may want to re-run Configure with real Azure credentials to overwrite.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend test file at /app/backend/tests/test_findenv.py covers findenv settings, environments, search (auth_failed path), and history. Frontend Configure dialog inputs don't have data-testids; used nth() indexing (0=username, 1=password, 2=client_id, 3=client_secret, 4=scope). Preview URL: https://team-scheduler-86.preview.emergentagent.com. OAuth to login.*.solaborate.com will always return invalid_client without real Azure AD creds — this is expected and the UI now surfaces it with a friendly message."
+}
