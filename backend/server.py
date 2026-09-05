@@ -4,6 +4,8 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import time
+import json
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Dict
@@ -240,6 +242,63 @@ class TVActivity(BaseModel):
     user_id: str
     user_name: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+# ============ FIND DEVICES MODELS ============
+
+class FindEnvEnvironment(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str  # e.g., "staging", "weekly", "qa"
+    display_name: str  # e.g., "Staging", "Weekly", "QA"
+    mdm_url: str = ""  # e.g., "mdm.staging.solaborate.com"
+    api_url: str = ""  # e.g., "api.staging.solaborate.com"
+    is_active: bool = True
+    order: int = 0
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FindEnvEnvironmentCreate(BaseModel):
+    name: str
+    display_name: str
+    is_active: bool = True
+    order: int = 0
+
+class FindEnvEnvironmentUpdate(BaseModel):
+    name: Optional[str] = None
+    display_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    order: Optional[int] = None
+
+class FindEnvSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "findenv_settings"
+    azure_username: Optional[str] = None
+    azure_password_encrypted: Optional[str] = None  # Encrypted password
+    client_id: str = "sol.web.endpointmanager.pkce"
+    last_login: Optional[datetime] = None
+    tokens: Dict[str, dict] = {}  # env_name -> {token, exp, refresh}
+
+class FindEnvSearchResult(BaseModel):
+    environment: str
+    display_name: str
+    status: str  # "online", "offline", "not_registered", "error", "no_access"
+    device_info: Optional[dict] = None
+    error_message: Optional[str] = None
+
+class FindEnvSearchResponse(BaseModel):
+    serial: str
+    results: List[FindEnvSearchResult]
+    found_online: Optional[str] = None  # env name where device is online
+    device_details: Optional[dict] = None
+
+class FindEnvSearchHistory(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    serial: str
+    user_id: str
+    user_name: str
+    found_in: Optional[str] = None
+    status: str
+    searched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # Helper functions
 def hash_password(password: str) -> str:
@@ -1715,6 +1774,373 @@ async def init_tv_defaults(user_token: str):
     await db.tv_rooms.insert_many(default_rooms)
     
     return {"message": "Default data initialized", "initialized": True, "floors": 2, "rooms": 3}
+
+# ============ FIND DEVICES API ENDPOINTS ============
+
+import httpx
+import base64
+from cryptography.fernet import Fernet
+import hashlib
+
+# Simple encryption for storing passwords
+def get_encryption_key():
+    # Use a consistent key derived from environment or generate one
+    secret = os.environ.get('SECRET_KEY', 'findenv-secret-key-2024')
+    return base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest())
+
+def encrypt_password(password: str) -> str:
+    f = Fernet(get_encryption_key())
+    return f.encrypt(password.encode()).decode()
+
+def decrypt_password(encrypted: str) -> str:
+    f = Fernet(get_encryption_key())
+    return f.decrypt(encrypted.encode()).decode()
+
+# Default environments
+DEFAULT_ENVIRONMENTS = [
+    {"name": "staging", "display_name": "Staging", "order": 1},
+    {"name": "weekly", "display_name": "Weekly", "order": 2},
+    {"name": "nightly", "display_name": "Nightly", "order": 3},
+    {"name": "qa", "display_name": "QA", "order": 4},
+    {"name": "smoke", "display_name": "Smoke", "order": 5},
+    {"name": "qc", "display_name": "QC", "order": 6},
+    {"name": "beta", "display_name": "Beta", "order": 7},
+    {"name": "uat", "display_name": "UAT", "order": 8},
+    {"name": "sec", "display_name": "Security", "order": 9},
+    {"name": "per", "display_name": "Performance", "order": 10},
+    {"name": "reg", "display_name": "Regression", "order": 11},
+    {"name": "int", "display_name": "Integration", "order": 12},
+    {"name": "can", "display_name": "Canary", "order": 13},
+]
+
+# Initialize default environments
+@api_router.post("/findenv/init-defaults")
+async def init_findenv_defaults(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    existing = await db.findenv_environments.count_documents({})
+    if existing > 0:
+        return {"message": "Environments already exist", "initialized": False}
+    
+    for env_data in DEFAULT_ENVIRONMENTS:
+        env = FindEnvEnvironment(
+            name=env_data["name"],
+            display_name=env_data["display_name"],
+            mdm_url=f"mdm.{env_data['name']}.solaborate.com",
+            api_url=f"api.{env_data['name']}.solaborate.com",
+            order=env_data["order"]
+        ).model_dump()
+        env['created_at'] = env['created_at'].isoformat()
+        await db.findenv_environments.insert_one(env)
+    
+    return {"message": "Default environments initialized", "initialized": True, "count": len(DEFAULT_ENVIRONMENTS)}
+
+# Environments CRUD
+@api_router.get("/findenv/environments")
+async def get_findenv_environments(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    envs = await db.findenv_environments.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    # Initialize defaults if none exist
+    if not envs:
+        for env_data in DEFAULT_ENVIRONMENTS:
+            env = FindEnvEnvironment(
+                name=env_data["name"],
+                display_name=env_data["display_name"],
+                mdm_url=f"mdm.{env_data['name']}.solaborate.com",
+                api_url=f"api.{env_data['name']}.solaborate.com",
+                order=env_data["order"]
+            ).model_dump()
+            env['created_at'] = env['created_at'].isoformat()
+            await db.findenv_environments.insert_one(env)
+        envs = await db.findenv_environments.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    return envs
+
+@api_router.post("/findenv/environments")
+async def create_findenv_environment(env: FindEnvEnvironmentCreate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    env_doc = FindEnvEnvironment(
+        name=env.name.lower().strip(),
+        display_name=env.display_name,
+        mdm_url=f"mdm.{env.name.lower().strip()}.solaborate.com",
+        api_url=f"api.{env.name.lower().strip()}.solaborate.com",
+        is_active=env.is_active,
+        order=env.order
+    ).model_dump()
+    env_doc['created_at'] = env_doc['created_at'].isoformat()
+    await db.findenv_environments.insert_one(env_doc)
+    env_doc.pop('_id', None)
+    return env_doc
+
+@api_router.put("/findenv/environments/{env_id}")
+async def update_findenv_environment(env_id: str, env: FindEnvEnvironmentUpdate, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {k: v for k, v in env.model_dump().items() if v is not None}
+    if 'name' in update_data:
+        update_data['name'] = update_data['name'].lower().strip()
+        update_data['mdm_url'] = f"mdm.{update_data['name']}.solaborate.com"
+        update_data['api_url'] = f"api.{update_data['name']}.solaborate.com"
+    
+    result = await db.findenv_environments.update_one({"id": env_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Environment not found")
+    
+    updated = await db.findenv_environments.find_one({"id": env_id}, {"_id": 0})
+    return updated
+
+@api_router.delete("/findenv/environments/{env_id}")
+async def delete_findenv_environment(env_id: str, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.findenv_environments.delete_one({"id": env_id})
+    return {"success": True}
+
+# Settings Management
+@api_router.get("/findenv/settings")
+async def get_findenv_settings(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    if not settings:
+        return {"id": "findenv_settings", "azure_username": None, "has_password": False, "is_configured": False}
+    
+    return {
+        "id": settings.get("id"),
+        "azure_username": settings.get("azure_username"),
+        "has_password": bool(settings.get("azure_password_encrypted")),
+        "is_configured": bool(settings.get("azure_username") and settings.get("azure_password_encrypted")),
+        "last_login": settings.get("last_login"),
+        "token_count": len(settings.get("tokens", {}))
+    }
+
+@api_router.post("/findenv/settings")
+async def save_findenv_settings(user_token: str, azure_username: str, azure_password: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    encrypted_password = encrypt_password(azure_password)
+    
+    await db.findenv_settings.update_one(
+        {"id": "findenv_settings"},
+        {"$set": {
+            "id": "findenv_settings",
+            "azure_username": azure_username,
+            "azure_password_encrypted": encrypted_password,
+            "tokens": {}  # Clear tokens on credential change
+        }},
+        upsert=True
+    )
+    
+    return {"success": True, "message": "Settings saved"}
+
+# Device Search
+@api_router.get("/findenv/search/{serial}")
+async def search_device(serial: str, user_token: str, show_all: bool = False):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    # Clean serial
+    serial = serial.strip().replace(" ", "").replace("-", "")
+    if not serial:
+        raise HTTPException(status_code=400, detail="Serial number is required")
+    
+    # Get active environments
+    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    if not envs:
+        raise HTTPException(status_code=400, detail="No environments configured")
+    
+    # Get settings
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    if not settings or not settings.get("azure_password_encrypted"):
+        raise HTTPException(status_code=400, detail="Azure credentials not configured. Admin must configure settings first.")
+    
+    try:
+        azure_password = decrypt_password(settings["azure_password_encrypted"])
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to decrypt credentials")
+    
+    azure_username = settings.get("azure_username")
+    stored_tokens = settings.get("tokens", {})
+    
+    results = []
+    found_online = None
+    device_details = None
+    
+    # Search all environments in parallel using httpx
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for env in envs:
+            env_name = env["name"]
+            result = FindEnvSearchResult(
+                environment=env_name,
+                display_name=env["display_name"],
+                status="checking"
+            )
+            
+            # Get or refresh token for this environment
+            token = stored_tokens.get(env_name, {}).get("token")
+            token_exp = stored_tokens.get(env_name, {}).get("exp", 0)
+            
+            # Check if token is expired (with 15 min margin)
+            if not token or (token_exp - time.time() < 15 * 60):
+                # Try to get new token via ROPC flow
+                try:
+                    token_response = await client.post(
+                        f"https://login.{env_name}.solaborate.com/core/connect/token",
+                        data={
+                            "grant_type": "password",
+                            "username": azure_username,
+                            "password": azure_password,
+                            "client_id": "sol.web.endpointmanager.pkce",
+                            "scope": "openid profile sol.web.endpointmanager"
+                        },
+                        headers={"Content-Type": "application/x-www-form-urlencoded"}
+                    )
+                    if token_response.status_code == 200:
+                        token_data = token_response.json()
+                        token = token_data.get("access_token")
+                        if token:
+                            # Parse expiry from JWT
+                            try:
+                                payload = token.split(".")[1]
+                                payload += "=" * (-len(payload) % 4)
+                                exp = int(json.loads(base64.urlsafe_b64decode(payload)).get("exp", 0))
+                            except Exception:
+                                exp = int(time.time() + 3600)
+                            
+                            stored_tokens[env_name] = {
+                                "token": token,
+                                "exp": exp,
+                                "refresh": token_data.get("refresh_token")
+                            }
+                    else:
+                        result.status = "auth_failed"
+                        result.error_message = f"Authentication failed: {token_response.status_code}"
+                        results.append(result)
+                        continue
+                except Exception as e:
+                    result.status = "unreachable"
+                    result.error_message = f"Could not connect to {env_name}"
+                    results.append(result)
+                    continue
+            
+            if not token:
+                result.status = "no_token"
+                result.error_message = "No valid token"
+                results.append(result)
+                continue
+            
+            # Search for device
+            try:
+                api_response = await client.get(
+                    f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/assigned-details",
+                    headers={
+                        "Authorization": f"Bearer {token}",
+                        "User-Agent": "FindEnv/2.0 (HelloCare Hub)"
+                    }
+                )
+                
+                if api_response.status_code == 200:
+                    device_data = api_response.json()
+                    device = device_data.get("device")
+                    if device:
+                        if device.get("isOnline"):
+                            result.status = "online"
+                            result.device_info = device
+                            if not found_online:
+                                found_online = env_name
+                                # Get detailed info
+                                dev_id = device.get("solHelloDeviceId", "")
+                                try:
+                                    detail_response = await client.get(
+                                        f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/details/{dev_id}",
+                                        headers={
+                                            "Authorization": f"Bearer {token}",
+                                            "User-Agent": "FindEnv/2.0 (HelloCare Hub)"
+                                        }
+                                    )
+                                    if detail_response.status_code == 200:
+                                        device_details = detail_response.json()
+                                        device_details["environment"] = env_name
+                                        device_details["display_name"] = env["display_name"]
+                                except Exception:
+                                    pass
+                        else:
+                            result.status = "offline"
+                            result.device_info = device
+                    else:
+                        result.status = "not_registered"
+                elif api_response.status_code == 404:
+                    result.status = "not_registered"
+                elif api_response.status_code == 401:
+                    result.status = "token_expired"
+                    result.error_message = "Token expired"
+                elif api_response.status_code == 403:
+                    result.status = "no_access"
+                    result.error_message = "No access to this environment"
+                else:
+                    result.status = "error"
+                    result.error_message = f"HTTP {api_response.status_code}"
+            except Exception as e:
+                result.status = "unreachable"
+                result.error_message = str(e)
+            
+            results.append(result)
+    
+    # Save updated tokens
+    await db.findenv_settings.update_one(
+        {"id": "findenv_settings"},
+        {"$set": {"tokens": stored_tokens}}
+    )
+    
+    # Log search
+    history = FindEnvSearchHistory(
+        serial=serial,
+        user_id=user['id'],
+        user_name=f"{user['first_name']} {user['last_name']}",
+        found_in=found_online,
+        status="found" if found_online else "not_found"
+    ).model_dump()
+    history['searched_at'] = history['searched_at'].isoformat()
+    await db.findenv_search_history.insert_one(history)
+    
+    return {
+        "serial": serial,
+        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access")],
+        "found_online": found_online,
+        "device_details": device_details
+    }
+
+# Search History
+@api_router.get("/findenv/history")
+async def get_search_history(user_token: str, limit: int = 50):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    history = await db.findenv_search_history.find(
+        {},
+        {"_id": 0}
+    ).sort("searched_at", -1).to_list(limit)
+    
+    return history
 
 # Include the router in the main app
 app.include_router(api_router)

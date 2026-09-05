@@ -6,6 +6,7 @@ import LandingPage from "./pages/LandingPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import TVSetups from "./pages/TVSetups";
+import FindDevices from "./pages/FindDevices";
 import AuthCallback from "./pages/AuthCallback";
 import PendingApprovalPage from "./pages/PendingApprovalPage";
 import { Toaster } from "@/components/ui/sonner";
@@ -64,18 +65,12 @@ function AppRouter({ user, onLogin, onLogout }) {
             <Navigate to="/" replace />
         } 
       />
-      {/* Placeholder route for Find Devices */}
+      {/* Find Devices Route */}
       <Route 
         path="/find-devices" 
         element={
           user ? 
-            <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-900">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4 dark:text-white">Find Hello Devices</h1>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">Coming Soon</p>
-                <a href="/home" className="text-blue-500 hover:underline">← Back to Home</a>
-              </div>
-            </div> : 
+            <FindDevices user={user} token={user.id} onLogout={onLogout} /> : 
             <Navigate to="/" replace />
         } 
       />

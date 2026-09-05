@@ -33,12 +33,12 @@ export default function LandingPage({ user, onLogout }) {
     {
       id: 'find-devices',
       title: 'Find Hello Devices',
-      description: 'Locate and discover Hello devices across different environments and networks.',
+      description: 'Search and locate Hello devices across 13+ MDM environments with real-time status.',
       icon: Search,
       color: 'from-emerald-500 to-teal-500',
       bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
       borderColor: 'border-emerald-200 dark:border-emerald-800',
-      available: false,
+      available: true,
       path: '/find-devices'
     }
   ];

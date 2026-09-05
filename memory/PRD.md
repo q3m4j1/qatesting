@@ -122,6 +122,25 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 
 ## Recent Updates (February 2026)
 
+### Find Hello Devices Module (NEW - September 2026)
+- **Created**: Device search across 13 MDM environments
+- **Features**:
+  - Search by serial number across all active environments
+  - Real-time device status (online, offline, not registered)
+  - Device details display (model, firmware, IP address)
+  - Search history tracking
+  - Environment management (Admin can add/edit/delete)
+  - Azure credentials configuration (encrypted storage)
+  - Show all environments toggle
+- **Permissions**:
+  - Admin: Configure Azure credentials, manage environments
+  - User: Search devices, view history
+- **Backend API**: `/api/findenv/*` endpoints
+- **Authentication**: ROPC flow with Azure AD for MDM API access
+- **Files created**:
+  - `/app/frontend/src/pages/FindDevices.js` (NEW)
+  - `/app/backend/server.py` (FindEnv models and endpoints)
+
 ### TV Setups Module (NEW - September 2026)
 - **Created**: Full TV Setups management module
 - **Features**:
