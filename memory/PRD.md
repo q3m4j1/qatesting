@@ -126,28 +126,29 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - **Created**: Device search across 13+ MDM environments
 - **Features**:
   - Search by serial number across all active environments
-  - Real-time device status (online, offline, not registered, auth_failed)
+  - Real-time device status (online, offline, not registered, token_expired, no_token)
   - Device details display (model, firmware, IP address)
   - Search history tracking
   - Environment management (Admin can add/edit/delete)
-  - Azure credentials configuration (encrypted storage)
-  - **OAuth Settings**: Configurable client_id, client_secret, and scope
+  - **Manual Token Authentication (NEW)**:
+    - Admin opens MDM website, logs in manually via browser
+    - Copies access token from browser DevTools (Network tab)
+    - Pastes token in app - stored with JWT expiration tracking
+    - Token status indicators: Valid (green), Expiring Soon (yellow), Expired (red), No Token (gray)
+    - "Open MDM" button opens login page in new tab
+    - Automatic expiration detection from JWT payload
   - Show all environments toggle
-  - **Improved Error Handling**: Descriptive error messages for auth failures
 - **Permissions**:
-  - Admin: Configure Azure credentials & OAuth settings, manage environments
+  - Admin: Manage tokens per environment, manage environments list
   - User: Search devices, view history
 - **Backend API**: `/api/findenv/*` endpoints
-- **Authentication**: ROPC flow with Azure AD for MDM API access
-- **Bug Fix (September 2026)**: 
-  - Fixed HTTP 400 Bad Request error handling
-  - Added configurable OAuth client_id, client_secret, and scope
-  - Auth failures now return descriptive error messages to UI
-  - Results filter now includes auth_failed and unreachable statuses
+  - `GET /api/findenv/tokens` - Get all token statuses with expiration info
+  - `POST /api/findenv/tokens/{env}` - Save manual access token
+  - `DELETE /api/findenv/tokens/{env}` - Delete token for environment
+  - `GET /api/findenv/search/{serial}` - Search device (uses stored tokens)
 - **Files created/modified**:
-  - `/app/frontend/src/pages/FindDevices.js` (NEW/Updated)
+  - `/app/frontend/src/pages/FindDevices.js` (Token Manager UI)
   - `/app/backend/server.py` (FindEnv models and endpoints)
-  - `/app/backend/tests/test_findenv.py` (Test file)
 
 ### TV Setups Module (NEW - September 2026)
 - **Created**: Full TV Setups management module

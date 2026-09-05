@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
-import { Search, Settings, History, Plus, Trash2, Edit, CheckCircle, XCircle, AlertCircle, Clock, Wifi, WifiOff, HelpCircle, Loader2 } from 'lucide-react';
+import { Search, Settings, History, Plus, Trash2, Edit, CheckCircle, XCircle, AlertCircle, Clock, Wifi, WifiOff, HelpCircle, Loader2, Key, ExternalLink, RefreshCw, Copy } from 'lucide-react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -24,6 +25,14 @@ const STATUS_CONFIG = {
   auth_failed: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: 'Auth Failed' },
   unreachable: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-100 dark:bg-gray-800', label: 'Unreachable' },
   token_expired: { icon: Clock, color: 'text-orange-500', bg: 'bg-orange-100 dark:bg-orange-900/30', label: 'Token Expired' },
+  no_token: { icon: Key, color: 'text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800', label: 'No Token' },
+};
+
+const TOKEN_STATUS_CONFIG = {
+  valid: { color: 'text-green-500', bg: 'bg-green-100 dark:bg-green-900/30', label: 'Valid' },
+  expiring_soon: { color: 'text-yellow-500', bg: 'bg-yellow-100 dark:bg-yellow-900/30', label: 'Expiring Soon' },
+  expired: { color: 'text-red-500', bg: 'bg-red-100 dark:bg-red-900/30', label: 'Expired' },
+  no_token: { color: 'text-gray-400', bg: 'bg-gray-100 dark:bg-gray-800', label: 'No Token' },
 };
 
 export default function FindDevices({ user, token, onLogout }) {
@@ -49,6 +58,13 @@ export default function FindDevices({ user, token, onLogout }) {
   const [scope, setScope] = useState('openid profile sol.web.endpointmanager');
   const [savingSettings, setSavingSettings] = useState(false);
   
+  // Token Management
+  const [showTokenManager, setShowTokenManager] = useState(false);
+  const [tokenStatuses, setTokenStatuses] = useState([]);
+  const [selectedEnvForToken, setSelectedEnvForToken] = useState(null);
+  const [manualToken, setManualToken] = useState('');
+  const [savingToken, setSavingToken] = useState(false);
+  
   // Environment dialog
   const [showEnvDialog, setShowEnvDialog] = useState(false);
   const [editingEnv, setEditingEnv] = useState(null);
@@ -73,6 +89,9 @@ export default function FindDevices({ user, token, onLogout }) {
       if (isAdmin) {
         const settingsRes = await axios.get(`${API}/findenv/settings`, { params: { user_token: token } });
         setSettings(settingsRes.data);
+        // Also fetch token statuses
+        const tokensRes = await axios.get(`${API}/findenv/tokens`, { params: { user_token: token } });
+        setTokenStatuses(tokensRes.data.tokens || []);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -80,6 +99,53 @@ export default function FindDevices({ user, token, onLogout }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTokenStatuses = async () => {
+    try {
+      const res = await axios.get(`${API}/findenv/tokens`, { params: { user_token: token } });
+      setTokenStatuses(res.data.tokens || []);
+    } catch (error) {
+      console.error('Error fetching token statuses:', error);
+    }
+  };
+
+  const saveManualToken = async () => {
+    if (!selectedEnvForToken || !manualToken.trim()) {
+      toast.error('Please paste the access token');
+      return;
+    }
+
+    setSavingToken(true);
+    try {
+      const res = await axios.post(`${API}/findenv/tokens/${selectedEnvForToken.environment}`, null, {
+        params: { user_token: token, access_token: manualToken.trim() }
+      });
+      toast.success(`Token saved for ${selectedEnvForToken.display_name}! Expires in ${res.data.time_left}`);
+      setManualToken('');
+      setSelectedEnvForToken(null);
+      fetchTokenStatuses();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to save token');
+    } finally {
+      setSavingToken(false);
+    }
+  };
+
+  const deleteToken = async (envName) => {
+    if (!window.confirm('Delete this token? You will need to login again to search this environment.')) return;
+    
+    try {
+      await axios.delete(`${API}/findenv/tokens/${envName}`, { params: { user_token: token } });
+      toast.success('Token deleted');
+      fetchTokenStatuses();
+    } catch (error) {
+      toast.error('Failed to delete token');
+    }
+  };
+
+  const openMdmLogin = (env) => {
+    window.open(env.mdm_url, '_blank');
   };
 
   const searchDevice = async () => {
@@ -223,32 +289,28 @@ export default function FindDevices({ user, token, onLogout }) {
             </p>
           </div>
           {isAdmin && (
-            <Button variant="outline" onClick={() => {
-              setAzureUsername(settings?.azure_username || '');
-              setClientId(settings?.client_id || 'sol.web.endpointmanager.pkce');
-              setScope(settings?.scope || 'openid profile sol.web.endpointmanager');
-              // Set mode based on whether custom OAuth settings exist
-              const hasCustomOAuth = settings?.has_client_secret || 
-                (settings?.client_id && settings.client_id !== 'sol.web.endpointmanager.pkce');
-              setAuthMode(hasCustomOAuth ? 'advanced' : 'simple');
-              setShowSettings(true);
-            }}>
-              <Settings className="w-4 h-4 mr-2" />
-              Configure
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => {
+                fetchTokenStatuses();
+                setShowTokenManager(true);
+              }}>
+                <Key className="w-4 h-4 mr-2" />
+                Manage Tokens
+              </Button>
+            </div>
           )}
         </div>
 
-        {/* Configuration Warning */}
-        {isAdmin && settings && !settings.is_configured && (
+        {/* Token Warning */}
+        {isAdmin && tokenStatuses.length > 0 && tokenStatuses.every(t => t.status === 'no_token') && (
           <Card className="mb-6 border-yellow-300 bg-yellow-50 dark:bg-yellow-900/20">
             <CardContent className="py-4">
               <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-yellow-600" />
+                <Key className="w-5 h-5 text-yellow-600" />
                 <div>
-                  <p className="font-medium text-yellow-800 dark:text-yellow-200">Azure credentials not configured</p>
-                  <p className="text-sm text-yellow-600 dark:text-yellow-400">
-                    Click "Configure" to set up Azure username and password for MDM access.
+                  <p className="font-medium text-yellow-800 dark:text-yellow-200">No tokens configured</p>
+                  <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                    Click "Manage Tokens" to login to MDM environments and add access tokens.
                   </p>
                 </div>
               </div>
@@ -507,130 +569,129 @@ export default function FindDevices({ user, token, onLogout }) {
         </Tabs>
       </div>
 
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="dark:bg-slate-800 max-w-md">
+      {/* Token Manager Dialog */}
+      <Dialog open={showTokenManager} onOpenChange={setShowTokenManager}>
+        <DialogContent className="dark:bg-slate-800 max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle>Azure Credentials</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="w-5 h-5" />
+              Manage Access Tokens
+            </DialogTitle>
             <DialogDescription>
-              Configure your Azure AD credentials for MDM API access.
+              Login to each MDM environment, copy the access token from browser DevTools, and paste it here.
             </DialogDescription>
           </DialogHeader>
           
-          {/* Auth Mode Tabs */}
-          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-            <button
-              onClick={() => setAuthMode('simple')}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                authMode === 'simple'
-                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-              }`}
-              data-testid="simple-mode-tab"
-            >
-              Simple
-            </button>
-            <button
-              onClick={() => setAuthMode('advanced')}
-              className={`flex-1 py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                authMode === 'advanced'
-                  ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400'
-              }`}
-              data-testid="advanced-mode-tab"
-            >
-              Advanced OAuth
-            </button>
+          {/* Instructions */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-sm">
+            <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">How to get an access token:</p>
+            <ol className="list-decimal list-inside text-blue-700 dark:text-blue-300 space-y-1">
+              <li>Click "Open MDM" to login to the environment</li>
+              <li>After logging in, press F12 to open DevTools</li>
+              <li>Go to Network tab, find any API request</li>
+              <li>Copy the "Authorization: Bearer ..." token value</li>
+              <li>Click "Add Token" and paste it here</li>
+            </ol>
           </div>
 
-          <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
-            {/* Common fields - Username & Password */}
-            <div>
-              <Label>Azure Username (Email) *</Label>
-              <Input
-                type="email"
-                value={azureUsername}
-                onChange={(e) => setAzureUsername(e.target.value)}
-                placeholder="user@company.com"
-                className="dark:bg-slate-700"
-                data-testid="azure-username-input"
-              />
-            </div>
-            <div>
-              <Label>Azure Password *</Label>
-              <Input
-                type="password"
-                value={azurePassword}
-                onChange={(e) => setAzurePassword(e.target.value)}
-                placeholder="Enter password"
-                className="dark:bg-slate-700"
-                data-testid="azure-password-input"
-              />
-            </div>
+          {/* Token List */}
+          <div className="flex-1 overflow-y-auto space-y-2 mt-4">
+            {tokenStatuses.map((env) => {
+              const statusConfig = TOKEN_STATUS_CONFIG[env.status] || TOKEN_STATUS_CONFIG.no_token;
+              return (
+                <div key={env.environment} className={`p-3 rounded-lg border ${statusConfig.bg} dark:border-gray-700`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800 dark:text-white">{env.display_name}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${statusConfig.bg} ${statusConfig.color}`}>
+                          {statusConfig.label}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {env.status === 'valid' && env.time_left_display && (
+                          <span>Expires in {env.time_left_display}</span>
+                        )}
+                        {env.status === 'expiring_soon' && (
+                          <span className="text-yellow-600">Expires in {env.time_left_display} - Refresh soon!</span>
+                        )}
+                        {env.status === 'expired' && (
+                          <span className="text-red-600">Token expired - Please refresh</span>
+                        )}
+                        {env.status === 'no_token' && (
+                          <span>No token configured</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openMdmLogin(env)}
+                        className="text-xs"
+                      >
+                        <ExternalLink className="w-3 h-3 mr-1" />
+                        Open MDM
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedEnvForToken(env);
+                          setManualToken('');
+                        }}
+                        className="text-xs"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        {env.status === 'no_token' ? 'Add' : 'Update'}
+                      </Button>
+                      {env.status !== 'no_token' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => deleteToken(env.environment)}
+                          className="text-xs text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-            {/* Simple Mode Info */}
-            {authMode === 'simple' && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  <strong>Simple Mode:</strong> Uses default OAuth client settings. 
-                  Switch to Advanced if you need custom client_id or client_secret.
-                </p>
+          {/* Add/Update Token Section */}
+          {selectedEnvForToken && (
+            <div className="border-t pt-4 mt-4">
+              <h4 className="font-medium text-gray-800 dark:text-white mb-2">
+                {selectedEnvForToken.status === 'no_token' ? 'Add' : 'Update'} Token for {selectedEnvForToken.display_name}
+              </h4>
+              <Textarea
+                value={manualToken}
+                onChange={(e) => setManualToken(e.target.value)}
+                placeholder="Paste the access token here (starts with 'eyJ...')"
+                className="dark:bg-slate-700 font-mono text-xs h-24"
+                data-testid="manual-token-input"
+              />
+              <div className="flex gap-2 mt-2">
+                <Button onClick={saveManualToken} disabled={savingToken} className="flex-1">
+                  {savingToken ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Token'
+                  )}
+                </Button>
+                <Button variant="outline" onClick={() => setSelectedEnvForToken(null)}>
+                  Cancel
+                </Button>
               </div>
-            )}
-
-            {/* Advanced Mode - OAuth Settings */}
-            {authMode === 'advanced' && (
-              <>
-                <div className="border-t pt-4 mt-2">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">OAuth Client Settings</p>
-                </div>
-                <div>
-                  <Label>Client ID</Label>
-                  <Input
-                    value={clientId}
-                    onChange={(e) => setClientId(e.target.value)}
-                    placeholder="sol.web.endpointmanager.pkce"
-                    className="dark:bg-slate-700"
-                    data-testid="client-id-input"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Default: sol.web.endpointmanager.pkce</p>
-                </div>
-                <div>
-                  <Label>Client Secret (Optional)</Label>
-                  <Input
-                    type="password"
-                    value={clientSecret}
-                    onChange={(e) => setClientSecret(e.target.value)}
-                    placeholder="For confidential clients only"
-                    className="dark:bg-slate-700"
-                    data-testid="client-secret-input"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Required if your client is configured as confidential</p>
-                </div>
-                <div>
-                  <Label>Scope</Label>
-                  <Input
-                    value={scope}
-                    onChange={(e) => setScope(e.target.value)}
-                    placeholder="openid profile sol.web.endpointmanager"
-                    className="dark:bg-slate-700"
-                    data-testid="scope-input"
-                  />
-                </div>
-              </>
-            )}
-
-            <Button onClick={saveSettings} disabled={savingSettings} className="w-full" data-testid="save-settings-button">
-              {savingSettings ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                authMode === 'simple' ? 'Save Credentials' : 'Save OAuth Settings'
-              )}
-            </Button>
-          </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

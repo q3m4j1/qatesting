@@ -1972,6 +1972,123 @@ async def save_findenv_settings(
     
     return {"success": True, "message": "Settings saved"}
 
+# Manual Token Management
+@api_router.post("/findenv/tokens/{env_name}")
+async def save_manual_token(env_name: str, user_token: str, access_token: str):
+    """Save a manually obtained access token for an environment"""
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Verify environment exists
+    env = await db.findenv_environments.find_one({"name": env_name}, {"_id": 0})
+    if not env:
+        raise HTTPException(status_code=404, detail=f"Environment '{env_name}' not found")
+    
+    # Parse JWT to get expiration
+    exp = None
+    try:
+        # JWT has 3 parts: header.payload.signature
+        parts = access_token.split(".")
+        if len(parts) == 3:
+            payload = parts[1]
+            # Add padding if needed
+            payload += "=" * (-len(payload) % 4)
+            decoded = json.loads(base64.urlsafe_b64decode(payload))
+            exp = decoded.get("exp")
+    except Exception as e:
+        logging.warning(f"Could not parse JWT expiration: {e}")
+    
+    # If we couldn't parse exp, set it to 1 hour from now
+    if not exp:
+        exp = int(time.time() + 3600)
+    
+    # Update tokens in settings
+    await db.findenv_settings.update_one(
+        {"id": "findenv_settings"},
+        {"$set": {f"tokens.{env_name}": {
+            "token": access_token,
+            "exp": exp,
+            "manual": True,
+            "saved_at": datetime.now(timezone.utc).isoformat()
+        }}},
+        upsert=True
+    )
+    
+    # Calculate time until expiration
+    time_left = exp - int(time.time())
+    hours_left = max(0, time_left // 3600)
+    mins_left = max(0, (time_left % 3600) // 60)
+    
+    return {
+        "success": True,
+        "environment": env_name,
+        "expires_at": datetime.fromtimestamp(exp, tz=timezone.utc).isoformat(),
+        "time_left": f"{hours_left}h {mins_left}m" if time_left > 0 else "Expired"
+    }
+
+@api_router.get("/findenv/tokens")
+async def get_all_tokens_status(user_token: str):
+    """Get status of all environment tokens"""
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+    
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    stored_tokens = settings.get("tokens", {}) if settings else {}
+    
+    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    
+    current_time = int(time.time())
+    token_status = []
+    
+    for env in envs:
+        env_name = env["name"]
+        token_info = stored_tokens.get(env_name, {})
+        token = token_info.get("token")
+        exp = token_info.get("exp", 0)
+        is_manual = token_info.get("manual", False)
+        
+        if not token:
+            status = "no_token"
+            time_left = None
+        elif exp < current_time:
+            status = "expired"
+            time_left = 0
+        elif exp - current_time < 15 * 60:  # Less than 15 minutes
+            status = "expiring_soon"
+            time_left = exp - current_time
+        else:
+            status = "valid"
+            time_left = exp - current_time
+        
+        token_status.append({
+            "environment": env_name,
+            "display_name": env["display_name"],
+            "status": status,
+            "is_manual": is_manual,
+            "expires_at": datetime.fromtimestamp(exp, tz=timezone.utc).isoformat() if exp else None,
+            "time_left_seconds": time_left,
+            "time_left_display": f"{time_left // 3600}h {(time_left % 3600) // 60}m" if time_left and time_left > 0 else None,
+            "mdm_url": f"https://mdm.{env_name}.solaborate.com"
+        })
+    
+    return {"tokens": token_status}
+
+@api_router.delete("/findenv/tokens/{env_name}")
+async def delete_token(env_name: str, user_token: str):
+    """Delete a token for an environment"""
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.findenv_settings.update_one(
+        {"id": "findenv_settings"},
+        {"$unset": {f"tokens.{env_name}": ""}}
+    )
+    
+    return {"success": True, "message": f"Token for {env_name} deleted"}
+
 # Device Search
 @api_router.get("/findenv/search/{serial}")
 async def search_device(serial: str, user_token: str, show_all: bool = False):
@@ -1989,36 +2106,16 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
     if not envs:
         raise HTTPException(status_code=400, detail="No environments configured")
     
-    # Get settings
+    # Get settings and tokens
     settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
-    if not settings or not settings.get("azure_password_encrypted"):
-        raise HTTPException(status_code=400, detail="Azure credentials not configured. Admin must configure settings first.")
-    
-    try:
-        azure_password = decrypt_password(settings["azure_password_encrypted"])
-    except Exception:
-        raise HTTPException(status_code=500, detail="Failed to decrypt credentials")
-    
-    azure_username = settings.get("azure_username")
-    stored_tokens = settings.get("tokens", {})
-    
-    # Get configurable OAuth settings
-    client_id = settings.get("client_id", "sol.web.endpointmanager.pkce")
-    scope = settings.get("scope", "openid profile sol.web.endpointmanager")
-    
-    # Decrypt client_secret if it exists
-    client_secret = None
-    if settings.get("client_secret_encrypted"):
-        try:
-            client_secret = decrypt_password(settings["client_secret_encrypted"])
-        except Exception:
-            logging.warning("Failed to decrypt client_secret, proceeding without it")
+    stored_tokens = settings.get("tokens", {}) if settings else {}
     
     results = []
     found_online = None
     device_details = None
+    current_time = int(time.time())
     
-    # Search all environments in parallel using httpx
+    # Search all environments using stored tokens
     async with httpx.AsyncClient(timeout=10.0) as client:
         for env in envs:
             env_name = env["name"]
@@ -2028,92 +2125,27 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
                 status="checking"
             )
             
-            # Get or refresh token for this environment
-            token = stored_tokens.get(env_name, {}).get("token")
-            token_exp = stored_tokens.get(env_name, {}).get("exp", 0)
+            # Get token for this environment
+            token_info = stored_tokens.get(env_name, {})
+            token = token_info.get("token")
+            token_exp = token_info.get("exp", 0)
+            is_manual = token_info.get("manual", False)
             
-            # Check if token is expired (with 15 min margin)
-            if not token or (token_exp - time.time() < 15 * 60):
-                # Try to get new token via ROPC flow
-                try:
-                    # Build the form data for OAuth token request
-                    form_data = {
-                        "grant_type": "password",
-                        "username": azure_username,
-                        "password": azure_password,
-                        "client_id": client_id,
-                        "scope": scope
-                    }
-                    
-                    # Add client_secret if available (required for confidential clients)
-                    if client_secret:
-                        form_data["client_secret"] = client_secret
-                    
-                    token_url = f"https://login.{env_name}.solaborate.com/core/connect/token"
-                    token_response = await client.post(
-                        token_url,
-                        data=form_data,
-                        headers={"Content-Type": "application/x-www-form-urlencoded"}
-                    )
-                    
-                    # Log detailed error info for debugging
-                    if token_response.status_code != 200:
-                        error_body = token_response.text[:500]
-                        logging.warning(f"OAuth token request failed for {env_name}: {token_response.status_code} - {error_body}")
-                        
-                        # Parse OAuth error for better user feedback
-                        try:
-                            error_json = token_response.json()
-                            error_code = error_json.get("error", "unknown")
-                            error_desc = error_json.get("error_description", "")
-                            if error_code == "invalid_client":
-                                result.error_message = "Invalid client configuration. Check client_id and client_secret in Settings."
-                            elif error_code == "invalid_grant":
-                                result.error_message = "Invalid username or password for this environment."
-                            elif error_code == "unauthorized_client":
-                                result.error_message = "Client not authorized for password grant. Contact admin."
-                            else:
-                                result.error_message = f"Auth error: {error_code} - {error_desc}"
-                        except Exception:
-                            result.error_message = f"Authentication failed: HTTP {token_response.status_code}"
-                    
-                    if token_response.status_code == 200:
-                        token_data = token_response.json()
-                        token = token_data.get("access_token")
-                        if token:
-                            # Parse expiry from JWT
-                            try:
-                                payload = token.split(".")[1]
-                                payload += "=" * (-len(payload) % 4)
-                                exp = int(json.loads(base64.urlsafe_b64decode(payload)).get("exp", 0))
-                            except Exception:
-                                exp = int(time.time() + 3600)
-                            
-                            stored_tokens[env_name] = {
-                                "token": token,
-                                "exp": exp,
-                                "refresh": token_data.get("refresh_token")
-                            }
-                    else:
-                        result.status = "auth_failed"
-                        # Keep the detailed error message if already set
-                        if not result.error_message:
-                            result.error_message = f"Authentication failed: HTTP {token_response.status_code}"
-                        results.append(result)
-                        continue
-                except Exception as e:
-                    result.status = "unreachable"
-                    result.error_message = f"Could not connect to {env_name}"
-                    results.append(result)
-                    continue
-            
+            # Check if we have a valid token
             if not token:
                 result.status = "no_token"
-                result.error_message = "No valid token"
+                result.error_message = f"No token configured. Click 'Manage Tokens' to add one for {env['display_name']}."
                 results.append(result)
                 continue
             
-            # Search for device
+            # Check if token is expired
+            if token_exp < current_time:
+                result.status = "token_expired"
+                result.error_message = f"Token expired. Click 'Refresh' to get a new token for {env['display_name']}."
+                results.append(result)
+                continue
+            
+            # Token is valid, search for device
             try:
                 api_response = await client.get(
                     f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/assigned-details",
@@ -2157,7 +2189,7 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
                     result.status = "not_registered"
                 elif api_response.status_code == 401:
                     result.status = "token_expired"
-                    result.error_message = "Token expired"
+                    result.error_message = "Token expired or invalid. Click 'Refresh' to get a new token."
                 elif api_response.status_code == 403:
                     result.status = "no_access"
                     result.error_message = "No access to this environment"
@@ -2169,12 +2201,6 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
                 result.error_message = str(e)
             
             results.append(result)
-    
-    # Save updated tokens
-    await db.findenv_settings.update_one(
-        {"id": "findenv_settings"},
-        {"$set": {"tokens": stored_tokens}}
-    )
     
     # Log search
     history = FindEnvSearchHistory(
@@ -2189,7 +2215,7 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
     
     return {
         "serial": serial,
-        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access", "auth_failed", "unreachable")],
+        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access", "no_token", "token_expired", "unreachable")],
         "found_online": found_online,
         "device_details": device_details
     }
