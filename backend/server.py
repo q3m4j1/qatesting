@@ -252,6 +252,7 @@ class FindEnvEnvironment(BaseModel):
     display_name: str  # e.g., "Staging", "Weekly", "QA"
     mdm_url: str = ""  # e.g., "mdm.staging.solaborate.com"
     api_url: str = ""  # e.g., "api.staging.solaborate.com"
+    switch_key: str = ""  # MDM key sent when switching TO this env (defaults to name)
     is_active: bool = True
     order: int = 0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -259,12 +260,14 @@ class FindEnvEnvironment(BaseModel):
 class FindEnvEnvironmentCreate(BaseModel):
     name: str
     display_name: str
+    switch_key: Optional[str] = None
     is_active: bool = True
     order: int = 0
 
 class FindEnvEnvironmentUpdate(BaseModel):
     name: Optional[str] = None
     display_name: Optional[str] = None
+    switch_key: Optional[str] = None
     is_active: Optional[bool] = None
     order: Optional[int] = None
 
@@ -285,6 +288,7 @@ class FindEnvSearchResult(BaseModel):
     status: str  # "online", "offline", "not_registered", "error", "no_access"
     device_info: Optional[dict] = None
     error_message: Optional[str] = None
+    http_status: Optional[int] = None
 
 class FindEnvSearchResponse(BaseModel):
     serial: str
@@ -301,6 +305,31 @@ class FindEnvSearchHistory(BaseModel):
     found_in: Optional[str] = None
     status: str
     searched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class FindEnvBatchSearchRequest(BaseModel):
+    serials: List[str]
+    show_all: bool = False
+
+class FindEnvMoveRequest(BaseModel):
+    serials: List[str]
+    target_env: str
+    from_env: Optional[str] = None
+    reason: Optional[str] = None
+    dry_run: bool = False
+
+class FindEnvMoveRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    serial: str
+    from_env: str
+    to_env: str
+    switch_key: str
+    device_id: str
+    status: str  # SENT, VERIFIED, REJECTED xxx, SEND-FAILED
+    reason: str
+    by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    verified_at: Optional[datetime] = None
 
 # Helper functions
 def hash_password(password: str) -> str:
@@ -1875,6 +1904,7 @@ async def create_findenv_environment(env: FindEnvEnvironmentCreate, user_token: 
         display_name=env.display_name,
         mdm_url=f"mdm.{env.name.lower().strip()}.solaborate.com",
         api_url=f"api.{env.name.lower().strip()}.solaborate.com",
+        switch_key=(env.switch_key or env.name).lower().strip(),
         is_active=env.is_active,
         order=env.order
     ).model_dump()
@@ -1894,6 +1924,8 @@ async def update_findenv_environment(env_id: str, env: FindEnvEnvironmentUpdate,
         update_data['name'] = update_data['name'].lower().strip()
         update_data['mdm_url'] = f"mdm.{update_data['name']}.solaborate.com"
         update_data['api_url'] = f"api.{update_data['name']}.solaborate.com"
+    if 'switch_key' in update_data:
+        update_data['switch_key'] = update_data['switch_key'].lower().strip()
     
     result = await db.findenv_environments.update_one({"id": env_id}, {"$set": update_data})
     if result.matched_count == 0:
@@ -2090,119 +2122,178 @@ async def delete_token(env_name: str, user_token: str):
     return {"success": True, "message": f"Token for {env_name} deleted"}
 
 # Device Search
-@api_router.get("/findenv/search/{serial}")
-async def search_device(serial: str, user_token: str, show_all: bool = False):
-    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
-    if not user:
-        raise HTTPException(status_code=403, detail="Invalid user")
-    
-    # Clean serial
+COMMAND_CHANGE_ENV = 12
+
+def _mdm_api_headers(token):
+    return {"Authorization": f"Bearer {token}", "User-Agent": "FindEnv/2.0 (HelloCare Hub)"}
+
+def build_move_body(dev_id, target_key, reason):
+    return {
+        "data": {"reason": reason, "dynamicData": target_key, "command": COMMAND_CHANGE_ENV},
+        "filter": {"selectAll": False, "solHelloDeviceIds": [str(dev_id)]},
+    }
+
+async def _get_device_details(client, env_name, serial, dev_id, token):
+    try:
+        r = await client.get(
+            f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/details/{dev_id}",
+            headers=_mdm_api_headers(token))
+        if r.status_code == 200:
+            j = r.json()
+            return j if isinstance(j, dict) else {}
+    except Exception:
+        pass
+    return {}
+
+async def _get_switch_history(client, env_name, dev_id, token, n=1):
+    try:
+        r = await client.get(
+            f"https://api.{env_name}.solaborate.com/v1/devices/{dev_id}/command-logs",
+            params={"currentPage": 1, "pageSize": n, "filters.commandType": COMMAND_CHANGE_ENV},
+            headers=_mdm_api_headers(token))
+        if r.status_code == 200:
+            data = ((r.json() or {}).get("result") or {}).get("data")
+            return data if isinstance(data, list) else []
+    except Exception:
+        pass
+    return []
+
+async def _perform_search(serial, envs, stored_tokens, client, debug=False):
+    """Search every env for a serial and enrich with details, mdm link, offline last-online, switch history."""
     serial = serial.strip().replace(" ", "").replace("-", "")
-    if not serial:
-        raise HTTPException(status_code=400, detail="Serial number is required")
-    
-    # Get active environments
-    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
-    if not envs:
-        raise HTTPException(status_code=400, detail="No environments configured")
-    
-    # Get settings and tokens
-    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
-    stored_tokens = settings.get("tokens", {}) if settings else {}
-    
     results = []
-    found_online = None
-    device_details = None
+    online_envs = []
+    offline_records = {}  # env_name -> device
     current_time = int(time.time())
-    
-    # Search all environments using stored tokens
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        for env in envs:
-            env_name = env["name"]
-            result = FindEnvSearchResult(
-                environment=env_name,
-                display_name=env["display_name"],
-                status="checking"
-            )
-            
-            # Get token for this environment
-            token_info = stored_tokens.get(env_name, {})
-            token = token_info.get("token")
-            token_exp = token_info.get("exp", 0)
-            is_manual = token_info.get("manual", False)
-            
-            # Check if we have a valid token
-            if not token:
-                result.status = "no_token"
-                result.error_message = f"No token configured. Click 'Manage Tokens' to add one for {env['display_name']}."
-                results.append(result)
-                continue
-            
-            # Check if token is expired
-            if token_exp < current_time:
-                result.status = "token_expired"
-                result.error_message = f"Token expired. Click 'Refresh' to get a new token for {env['display_name']}."
-                results.append(result)
-                continue
-            
-            # Token is valid, search for device
-            try:
-                api_response = await client.get(
-                    f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/assigned-details",
-                    headers={
-                        "Authorization": f"Bearer {token}",
-                        "User-Agent": "FindEnv/2.0 (HelloCare Hub)"
-                    }
-                )
-                
-                if api_response.status_code == 200:
-                    device_data = api_response.json()
-                    device = device_data.get("device")
-                    if device:
-                        if device.get("isOnline"):
-                            result.status = "online"
-                            result.device_info = device
-                            if not found_online:
-                                found_online = env_name
-                                # Get detailed info
-                                dev_id = device.get("solHelloDeviceId", "")
-                                try:
-                                    detail_response = await client.get(
-                                        f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/details/{dev_id}",
-                                        headers={
-                                            "Authorization": f"Bearer {token}",
-                                            "User-Agent": "FindEnv/2.0 (HelloCare Hub)"
-                                        }
-                                    )
-                                    if detail_response.status_code == 200:
-                                        device_details = detail_response.json()
-                                        device_details["environment"] = env_name
-                                        device_details["display_name"] = env["display_name"]
-                                except Exception:
-                                    pass
-                        else:
-                            result.status = "offline"
-                            result.device_info = device
-                    else:
-                        result.status = "not_registered"
-                elif api_response.status_code == 404:
-                    result.status = "not_registered"
-                elif api_response.status_code == 401:
-                    result.status = "token_expired"
-                    result.error_message = "Token expired or invalid. Click 'Refresh' to get a new token."
-                elif api_response.status_code == 403:
-                    result.status = "no_access"
-                    result.error_message = "No access to this environment"
-                else:
-                    result.status = "error"
-                    result.error_message = f"HTTP {api_response.status_code}"
-            except Exception as e:
-                result.status = "unreachable"
-                result.error_message = str(e)
-            
+
+    def tok(e):
+        return (stored_tokens.get(e) or {}).get("token")
+
+    for env in envs:
+        env_name = env["name"]
+        result = FindEnvSearchResult(environment=env_name, display_name=env["display_name"], status="checking")
+        token_info = stored_tokens.get(env_name, {})
+        token = token_info.get("token")
+        token_exp = token_info.get("exp", 0)
+
+        if not token:
+            result.status = "no_token"
+            result.error_message = f"No token configured. Add one for {env['display_name']}."
             results.append(result)
-    
-    # Log search
+            continue
+        if token_exp < current_time:
+            result.status = "token_expired"
+            result.error_message = f"Token expired for {env['display_name']}."
+            results.append(result)
+            continue
+
+        try:
+            resp = await client.get(
+                f"https://api.{env_name}.solaborate.com/v1.1/devices/{serial}/assigned-details",
+                headers=_mdm_api_headers(token))
+            result.http_status = resp.status_code
+            if resp.status_code == 200:
+                device = (resp.json() or {}).get("device")
+                if device:
+                    if device.get("isOnline"):
+                        result.status = "online"
+                        result.device_info = device
+                        online_envs.append(env_name)
+                    else:
+                        result.status = "offline"
+                        result.device_info = device
+                        offline_records[env_name] = device
+                else:
+                    result.status = "not_registered"
+            elif resp.status_code == 404:
+                result.status = "not_registered"
+            elif resp.status_code == 401:
+                result.status = "token_expired"
+                result.error_message = "Token expired or invalid. Refresh it."
+            elif resp.status_code == 403:
+                result.status = "no_access"
+                result.error_message = "No access to this environment"
+            else:
+                result.status = "error"
+                result.error_message = f"HTTP {resp.status_code}"
+        except Exception as e:
+            result.status = "unreachable"
+            result.error_message = str(e)[:120]
+        results.append(result)
+
+    found_online = online_envs[0] if online_envs else None
+    device_details = None
+    mdm_link = None
+    current_env = None
+    device_obj = None
+    last_online_env = None
+    last_online_time = None
+    last_switch = None
+
+    if found_online:
+        current_env = found_online
+        device_obj = next((r.device_info for r in results if r.environment == found_online), None)
+    elif offline_records:
+        # Detect the env where the device was last online
+        seen = {}
+        for e, dev in offline_records.items():
+            dev_id = dev.get("solHelloDeviceId")
+            if not dev_id:
+                continue
+            details = await _get_device_details(client, e, serial, dev_id, tok(e))
+            lt = (details.get("deviceInformation") or {}).get("lastTimeOnline")
+            if lt:
+                seen[e] = lt
+        if seen:
+            last_online_env = max(seen, key=seen.get)
+            last_online_time = seen[last_online_env]
+            current_env = last_online_env
+        else:
+            current_env = next(iter(offline_records))
+        device_obj = offline_records.get(current_env)
+
+    # Enrich for the "current" env (online, or last-online offline)
+    if current_env and device_obj:
+        dev_id = device_obj.get("solHelloDeviceId", "")
+        mdm_link = f"https://mdm.{current_env}.solaborate.com/devices/{serial}/{dev_id}"
+        details = await _get_device_details(client, current_env, serial, dev_id, tok(current_env))
+        if details:
+            details = dict(details)
+            details["environment"] = current_env
+            details["display_name"] = next((e["display_name"] for e in envs if e["name"] == current_env), current_env)
+            device_details = details
+        hist = await _get_switch_history(client, current_env, dev_id, tok(current_env), n=1)
+        if hist:
+            h = hist[0]
+            key = (h.get("dynamicData") or "").lower()
+            to_env = next((e["name"] for e in envs if (e.get("switch_key") or e["name"]) == key), None)
+            to_display = next((e["display_name"] for e in envs if e["name"] == to_env), None) if to_env else None
+            last_switch = {
+                "from_env": current_env,
+                "to_key": key,
+                "to_env": to_env,
+                "to_display": to_display,
+                "created_date": h.get("createdDate"),
+                "created_by": h.get("createdBy"),
+            }
+
+    return {
+        "serial": serial,
+        "results": results,
+        "found_online": found_online,
+        "online_count": len(online_envs),
+        "device": device_obj,
+        "device_details": device_details,
+        "mdm_link": mdm_link,
+        "current_env": current_env,
+        "last_online_env": last_online_env,
+        "last_online_time": last_online_time,
+        "last_switch": last_switch,
+    }
+
+_VISIBLE_STATUSES = ("online", "offline", "error", "no_access", "no_token", "token_expired", "unreachable")
+
+async def _log_search(serial, user, found_online):
     history = FindEnvSearchHistory(
         serial=serial,
         user_id=user['id'],
@@ -2212,13 +2303,217 @@ async def search_device(serial: str, user_token: str, show_all: bool = False):
     ).model_dump()
     history['searched_at'] = history['searched_at'].isoformat()
     await db.findenv_search_history.insert_one(history)
-    
-    return {
-        "serial": serial,
-        "results": results if show_all else [r for r in results if r.status in ("online", "offline", "error", "no_access", "no_token", "token_expired", "unreachable")],
-        "found_online": found_online,
-        "device_details": device_details
-    }
+
+@api_router.get("/findenv/search/{serial}")
+async def search_device(serial: str, user_token: str, show_all: bool = False, debug: bool = False):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+
+    serial = serial.strip().replace(" ", "").replace("-", "")
+    if not serial:
+        raise HTTPException(status_code=400, detail="Serial number is required")
+
+    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    if not envs:
+        raise HTTPException(status_code=400, detail="No environments configured")
+
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    stored_tokens = settings.get("tokens", {}) if settings else {}
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        data = await _perform_search(serial, envs, stored_tokens, client, debug=debug)
+
+    await _log_search(serial, user, data["found_online"])
+
+    if not show_all:
+        data["results"] = [r for r in data["results"] if r.status in _VISIBLE_STATUSES]
+    return data
+
+@api_router.post("/findenv/search-batch")
+async def search_batch(req: FindEnvBatchSearchRequest, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user:
+        raise HTTPException(status_code=403, detail="Invalid user")
+
+    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    if not envs:
+        raise HTTPException(status_code=400, detail="No environments configured")
+
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    stored_tokens = settings.get("tokens", {}) if settings else {}
+
+    # Dedupe & clean serials
+    serials = []
+    for raw in req.serials:
+        s = (raw or "").strip().replace(" ", "").replace("-", "")
+        if s and s not in serials:
+            serials.append(s)
+
+    searches = []
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        for s in serials:
+            data = await _perform_search(s, envs, stored_tokens, client)
+            await _log_search(s, user, data["found_online"])
+            if not req.show_all:
+                data["results"] = [r for r in data["results"] if r.status in _VISIBLE_STATUSES]
+            searches.append(data)
+
+    return {"searches": searches}
+
+# Move / Switch Environment
+@api_router.post("/findenv/move")
+async def move_devices(req: FindEnvMoveRequest, user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    target = req.target_env.strip().lower()
+    envs = await db.findenv_environments.find({"is_active": True}, {"_id": 0}).sort("order", 1).to_list(100)
+    target_env_doc = await db.findenv_environments.find_one({"name": target}, {"_id": 0})
+    if not target_env_doc:
+        raise HTTPException(status_code=400, detail=f"Unknown target environment '{target}'")
+    target_key = (target_env_doc.get("switch_key") or target).lower().strip()
+
+    from_env = req.from_env.strip().lower() if req.from_env else None
+    user_name = f"{user['first_name']} {user['last_name']}"
+    reason = (req.reason or "").strip() or f"findenv move by {user_name}"
+
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    stored_tokens = settings.get("tokens", {}) if settings else {}
+
+    plan = []
+    skipped = []
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        for raw in req.serials:
+            serial = (raw or "").strip().replace(" ", "").replace("-", "")
+            if not serial:
+                continue
+            data = await _perform_search(serial, envs, stored_tokens, client)
+            online = [r.environment for r in data["results"] if r.status == "online"]
+
+            if len(online) > 1:
+                skipped.append({"serial": serial, "reason": f"online in {len(online)} envs at once ({', '.join(online)})"})
+                continue
+
+            if from_env:
+                rec = next((r for r in data["results"] if r.environment == from_env and r.status in ("online", "offline")), None)
+                if not rec:
+                    skipped.append({"serial": serial, "reason": f"not registered in {from_env}"})
+                    continue
+                source = from_env
+                device = rec.device_info
+            elif online:
+                source = online[0]
+                device = next((r.device_info for r in data["results"] if r.environment == source), None)
+            elif data["current_env"]:
+                source = data["current_env"]
+                device = data["device"]
+            else:
+                skipped.append({"serial": serial, "reason": "not found in any env (specify a source env)"})
+                continue
+
+            if source == target:
+                skipped.append({"serial": serial, "reason": f"already on {target}"})
+                continue
+
+            dev_id = (device or {}).get("solHelloDeviceId")
+            if not dev_id:
+                skipped.append({"serial": serial, "reason": "no device id in API response"})
+                continue
+
+            plan.append({
+                "serial": serial,
+                "source": source,
+                "device_id": str(dev_id),
+                "name": (device or {}).get("name", ""),
+                "is_online": bool((device or {}).get("isOnline")),
+            })
+
+        if req.dry_run:
+            return {"dry_run": True, "target_env": target, "target_key": target_key,
+                    "reason": reason, "plan": plan, "skipped": skipped}
+
+        sent = []
+        for item in plan:
+            source = item["source"]
+            dev_id = item["device_id"]
+            token = (stored_tokens.get(source) or {}).get("token")
+            body = build_move_body(dev_id, target_key, reason)
+            status = "SENT"
+            err = None
+            if not token:
+                status = "SEND-FAILED"
+                err = "no token for source env"
+            else:
+                try:
+                    r = await client.post(
+                        f"https://api.{source}.solaborate.com/v1.1/devices/commands",
+                        json=body, headers=_mdm_api_headers(token))
+                    if not (200 <= r.status_code < 300):
+                        status = f"REJECTED {r.status_code}"
+                        err = r.text[:200]
+                except Exception as e:
+                    status = "SEND-FAILED"
+                    err = str(e)[:200]
+
+            record = FindEnvMoveRecord(
+                serial=item["serial"], from_env=source, to_env=target, switch_key=target_key,
+                device_id=dev_id, status=status, reason=reason, by=user_name
+            ).model_dump()
+            record["created_at"] = record["created_at"].isoformat()
+            record["verified_at"] = None
+            record["error"] = err
+            record["is_online_at_send"] = item["is_online"]
+            await db.findenv_moves.insert_one(record)
+            record.pop("_id", None)
+            sent.append({**item, "status": status, "error": err, "move_id": record["id"]})
+
+        return {"dry_run": False, "target_env": target, "target_key": target_key,
+                "reason": reason, "sent": sent, "skipped": skipped}
+
+@api_router.get("/findenv/moves")
+async def get_moves(user_token: str, limit: int = 20):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+    moves = await db.findenv_moves.find({}, {"_id": 0}).sort("created_at", -1).to_list(limit)
+    return moves
+
+@api_router.post("/findenv/moves/check")
+async def check_pending_moves(user_token: str):
+    user = await db.users.find_one({"id": user_token}, {"_id": 0, "password": 0})
+    if not user or user['role'] != 'Admin':
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    pending = await db.findenv_moves.find({"status": "SENT"}, {"_id": 0}).to_list(200)
+    settings = await db.findenv_settings.find_one({"id": "findenv_settings"}, {"_id": 0})
+    stored_tokens = settings.get("tokens", {}) if settings else {}
+
+    verified = []
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        for m in pending:
+            target = m["to_env"]
+            serial = m["serial"]
+            token = (stored_tokens.get(target) or {}).get("token")
+            if not token:
+                continue
+            try:
+                r = await client.get(
+                    f"https://api.{target}.solaborate.com/v1.1/devices/{serial}/assigned-details",
+                    headers=_mdm_api_headers(token))
+                if r.status_code == 200:
+                    device = (r.json() or {}).get("device")
+                    if device and device.get("isOnline"):
+                        await db.findenv_moves.update_one(
+                            {"id": m["id"]},
+                            {"$set": {"status": "VERIFIED", "verified_at": datetime.now(timezone.utc).isoformat()}})
+                        verified.append({"serial": serial, "to_env": target})
+            except Exception:
+                pass
+
+    return {"checked": len(pending), "verified": verified}
+
 
 # Search History
 @api_router.get("/findenv/history")

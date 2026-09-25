@@ -234,3 +234,29 @@ A full-stack application (React + FastAPI + MongoDB) for managing QA testing env
 - `POST /api/findenv/settings` - Save OAuth settings with client_id, client_secret, scope
 - `GET /api/findenv/search/{serial}` - Search device across environments
 - `GET /api/findenv/history` - Get search history
+
+## Find Hello Devices — Feature Parity with findenv.py CLI (2026-06)
+Ported the remaining CLI features from the reference `findenv.py` tool into the web app.
+
+### New Features
+- **Move / Switch Environment**: Admin can move a found device to another env. Sends the real MDM change-env command (command=12) to `POST /v1.1/devices/commands` with `dynamicData=target switch_key`. Confirmation dialog + reason field. Offline devices are queued.
+- **Move Log tab** with statuses (SENT / VERIFIED / SEND-FAILED / REJECTED) + "Verify Pending" button that polls target env for online status.
+- **Multiple serials** search at once (space/comma/newline separated) via `POST /findenv/search-batch`.
+- **Wait mode**: frontend polls every 10s until all devices online.
+- **Rich device details + MDM deep link**: where/name, tenant, device family, IP, WiFi/SSID, `mdm.<env>.solaborate.com/devices/<serial>/<id>` link.
+- **Offline intelligence**: detects last-online env via `deviceInformation.lastTimeOnline`; shows last env-switch history (from→to, when, by whom) via command-logs.
+- **switch_key** per environment (editable in UI, defaults to env name; backfilled for existing 15 envs).
+- Debug HTTP status shown per env.
+
+### New/changed backend endpoints
+- `GET /api/findenv/search/{serial}?show_all&debug` - enriched (device, details, mdm_link, current_env, last_online_env/time, last_switch, online_count)
+- `POST /api/findenv/search-batch` - {serials[], show_all}
+- `POST /api/findenv/move` - {serials[], target_env, from_env?, reason?, dry_run?}
+- `GET /api/findenv/moves?limit` - move log
+- `POST /api/findenv/moves/check` - re-verify SENT moves
+- Env CRUD now accepts/returns `switch_key`
+
+### Status
+- Backend endpoints, env CRUD w/ switch_key, move dry-run/skip logic, move log persistence: verified via curl.
+- UI (multi-serial search, wait toggle, Move Log, Environments switch key, Move dialog): verified via screenshots.
+- LIVE search + move against real MDM require valid pasted tokens (only user has these) → USER VERIFICATION PENDING for real device flows.
